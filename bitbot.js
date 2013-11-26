@@ -16,7 +16,7 @@ module.exports = {
 
 	start: function () {
         console.log("starting bot");
-        
+
         var self = this;
 
         setInterval(function () {
@@ -62,19 +62,17 @@ module.exports = {
         }
     },
 
-    calculateAfterFees: function (exchange1BuyPrice, exchange1Fee, exchange2SellPrice, exchange2Fee) {
+    calculateAfterFees: function (exchange1BuyPrice, exchange1Fee, exchange2SellPrice, exchange2Fee, exchange1Name, exchange2Name) {
         var amount = this.tradeAmount;
 
         var amountToBuy = (exchange1BuyPrice * amount) * (1 - exchange1Fee);
         var amountToSell = (exchange2SellPrice * amount) * (1 - exchange2Fee);
 
-        // console.log("difference: ", (amountToBuy - amountToSell));
-
         if ((amountToBuy - amountToSell) > 0) {
             console.log("\007");
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
             console.log('Found a candidate!!!');
-            console.log('buy ltc for ' + exchange1BuyPrice + ' and sell for ' + exchange2SellPrice);
+            console.log('buy ' + amount + ' ltc for ' + exchange1BuyPrice + ' in ' + exchange1Name + ' and sell ' + amount + ' ltc for ' + exchange2SellPrice + ' in ' + exchange2Name);
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
         }
     }
