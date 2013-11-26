@@ -37,42 +37,42 @@ module.exports = {
     },
 
     calculateArbOpportunity: function (exchanges) {
-        var exchangesCompared = [];
+        var exArray = [];
 
         //compare all exchanges prices from each exchange with each other
-        _.each(exchanges, function (exchangeToCompare) {
-            _.each(exchanges, function (exchangeToBeCompared) {
-                if (exchangeToBeCompared.exchangeName !== exchangeToCompare.exchangeName) {
-                    if (!exchangesCompared[exchangeToBeCompared.exchangeName]) {
-                        this.calculateViability(exchangeToCompare, exchangeToBeCompared);
+        _.each(exchanges, function (ex1) {
+            _.each(exchanges, function (ex2) {
+                if (ex2.exchangeName !== ex1.exchangeName) {
+                    if (!exArray[ex2.exchangeName]) {
+                        this.calculateViability(ex1, ex2);
                     }
                 }
             }, this);
 
-            exchangesCompared[exchangeToCompare.exchangeName] = true;
+            exArray[ex1.exchangeName] = true;
         }, this);
     },
 
-    calculateViability: function (exchange1, exchange2) {
-        if (exchange1.bestPrices.lowestBuyPrice.price < exchange2.bestPrices.highestSellPrice.price) {
-            this.calculateAfterFees(exchange1.bestPrices.lowestBuyPrice.price, exchange1.buyltcFee, exchange2.bestPrices.highestSellPrice.price, exchange2.buybtcFee);
+    calculateViability: function (ex1, ex2) {
+        if (ex1.bestPrices.lowestBuyPrice.price < ex2.bestPrices.highestSellPrice.price) {
+            this.calculateAfterFees(ex1.bestPrices.lowestBuyPrice.price, ex1.buyltcFee, ex2.bestPrices.highestSellPrice.price, ex2.buybtcFee, ex1.exchangeName, ex2.exchangeName);
         }
-        else if (exchange1.bestPrices.highestSellPrice.price > exchange2.bestPrices.lowestBuyPrice.price) {
-            this.calculateAfterFees(exchange2.bestPrices.lowestBuyPrice.price, exchange2.buyltcFee, exchange1.bestPrices.highestSellPrice.price, exchange1.buybtcFee);
+        else if (ex1.bestPrices.highestSellPrice.price > ex2.bestPrices.lowestBuyPrice.price) {
+            this.calculateAfterFees(ex2.bestPrices.lowestBuyPrice.price, ex2.buyltcFee, ex1.bestPrices.highestSellPrice.price, ex1.buybtcFee, ex2.exchangeName, ex1.exchangeName);
         }
     },
 
-    calculateAfterFees: function (exchange1BuyPrice, exchange1Fee, exchange2SellPrice, exchange2Fee, exchange1Name, exchange2Name) {
+    calculateAfterFees: function (ex1BuyPrice, ex1Fee, ex2SellPrice, ex2Fee, ex1Name, ex2Name) {
         var amount = this.tradeAmount;
 
-        var amountToBuy = (exchange1BuyPrice * amount) * (1 - exchange1Fee);
-        var amountToSell = (exchange2SellPrice * amount) * (1 - exchange2Fee);
+        var amountToBuy = (ex1BuyPrice * amount) * (1 - ex1Fee);
+        var amountToSell = (ex2SellPrice * amount) * (1 - ex2Fee);
 
         if ((amountToBuy - amountToSell) > 0) {
             console.log("\007");
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
             console.log('Found a candidate!!!');
-            console.log('buy ' + amount + ' ltc for ' + exchange1BuyPrice + ' in ' + exchange1Name + ' and sell ' + amount + ' ltc for ' + exchange2SellPrice + ' in ' + exchange2Name);
+            console.log('buy ' + amount + ' ltc for ' + ex1BuyPrice + ' in ' + ex1Name + ' and sell ' + amount + ' ltc for ' + ex2SellPrice + ' in ' + ex2Name);
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
         }
     }
