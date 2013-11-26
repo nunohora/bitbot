@@ -17,63 +17,98 @@ module.exports = {
 	start: function () {
         console.log("starting bot");
 
-        var self = this;
-
-        setInterval(function () {
-            self.getExchangesInfo();
-        }, self.interval);
+        this.startLookingAtPrices();
 	},
 
-    getExchangesInfo: function () {
-        var self = this;
+    startLookingAtPrices: function () {
+        var self = this,
+            hasFoundArb = false;
+        
+        var getExchangesInfo = function () {
+            var group = all(
+                btce.getExchangeInfo(config.btce.ltcbtcMarket),
+                cryptsy.getExchangeInfo(config.cryptsy.ltcbtcMarket),
+                vircurex.getExchangeInfo(config.vircurex.ltcbtcMarket)
+            ).then(function (array) {
+                hasFoundArb = self.calculateArbOpportunity(array);
+                
+                //escaping the setInterval
+                if (hasFoundArb) {
+                    self.makeTrade(hasFoundArb);
+                    clearInterval(getExchangesInfo);
+                    console.log("INTERVAL ESCAPED!!!!");
+                }
+            });
+        };
 
-        var group = all(
-            btce.getExchangeInfo(config.btce.ltcbtcMarket),
-            cryptsy.getExchangeInfo(config.cryptsy.ltcbtcMarket),
-            vircurex.getExchangeInfo(config.vircurex.ltcbtcMarket)
-        ).then(function (array) {
-            self.calculateArbOpportunity(array);
-        });
+        setInterval(getExchangesInfo, self.interval);
     },
 
     calculateArbOpportunity: function (exchanges) {
-        var exArray = [];
+        var exArray = [],
+            viability,
+            arbFound = false;
 
         //compare all exchanges prices from each exchange with each other
         _.each(exchanges, function (ex1) {
-            _.each(exchanges, function (ex2) {
-                if (ex2.exchangeName !== ex1.exchangeName) {
-                    if (!exArray[ex2.exchangeName]) {
-                        this.calculateViability(ex1, ex2);
+            _.some(exchanges, function (ex2) {
+                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
+                    arbFound = this.calculateViability(ex1, ex2);
+
+                    if (arbFound) {
+                        console.log("\007");
+                        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+                        console.log('Found a candidate!!!');
+                        console.log('buy ' + this.tradeAmount + ' ltc for ' + arbFound.ex1.toBuy + ' in ' + arbFound.ex1.name + ' and sell ' + this.tradeAmount + ' ltc for ' + arbFound.ex2.toSell + ' in ' + arbFound.ex2.name);
+                        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+
                     }
+                    return arbFound;
                 }
             }, this);
 
             exArray[ex1.exchangeName] = true;
         }, this);
+
+        return arbFound;
     },
 
     calculateViability: function (ex1, ex2) {
+        var isViable = false;
+
         if (ex1.bestPrices.lowestBuyPrice.price < ex2.bestPrices.highestSellPrice.price) {
-            this.calculateAfterFees(ex1.bestPrices.lowestBuyPrice.price, ex1.buyltcFee, ex2.bestPrices.highestSellPrice.price, ex2.buybtcFee, ex1.exchangeName, ex2.exchangeName);
+            isViable = this.calculateAfterFees(ex1, ex2);
         }
         else if (ex1.bestPrices.highestSellPrice.price > ex2.bestPrices.lowestBuyPrice.price) {
-            this.calculateAfterFees(ex2.bestPrices.lowestBuyPrice.price, ex2.buyltcFee, ex1.bestPrices.highestSellPrice.price, ex1.buybtcFee, ex2.exchangeName, ex1.exchangeName);
+            isViable = this.calculateAfterFees(ex2, ex1);
         }
+
+        return isViable;
     },
 
-    calculateAfterFees: function (ex1BuyPrice, ex1Fee, ex2SellPrice, ex2Fee, ex1Name, ex2Name) {
-        var amount = this.tradeAmount;
+    calculateAfterFees: function (ex1, ex2) {
+        var amount = this.tradeAmount,
+            amountToBuy = (ex1.bestPrices.lowestBuyPrice.price * amount) * (1 - ex1.buyltcFee),
+            amountToSell = (ex2.bestPrices.highestSellPrice.price * amount) * (1 - ex2.buybtcFee);
 
-        var amountToBuy = (ex1BuyPrice * amount) * (1 - ex1Fee);
-        var amountToSell = (ex2SellPrice * amount) * (1 - ex2Fee);
-
-        if ((amountToBuy - amountToSell) > 0) {
-            console.log("\007");
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
-            console.log('Found a candidate!!!');
-            console.log('buy ' + amount + ' ltc for ' + ex1BuyPrice + ' in ' + ex1Name + ' and sell ' + amount + ' ltc for ' + ex2SellPrice + ' in ' + ex2Name);
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+        console.log('toBuy: ', amountToBuy);
+        console.log('toSell: ', amountToSell);
+        console.log(amountToBuy - amountToSell);
+        
+        if (amountToBuy - amountToSell > 0) {
+            return {
+                ex1: {
+                    name: ex1.exchangeName,
+                    toBuy: ex1.bestPrices.lowestBuyPrice.price
+                },
+                ex2: {
+                    name: ex2.exchangeName,
+                    toSell: ex2.bestPrices.highestSellPrice.price
+                }
+            };
+        }
+        else {
+            return false;
         }
     }
 };
