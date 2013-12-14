@@ -1,8 +1,6 @@
 var config = require('./../config');
-
 var cryptsy = require('cryptsy-api');
 var client = new cryptsy(config.cryptsy.publicKey, config.cryptsy.privateKey);
-
 var Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
@@ -22,6 +20,10 @@ module.exports = {
         });
 
         return deferred.promise;
+    },
+
+    createOrder: function (market, type, rate, amount) {
+        var deferred = new Deferred();
     },
 
     getExchangeInfo: function (market) {

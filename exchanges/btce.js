@@ -1,5 +1,4 @@
 var config = require('./../config');
-
 var BTCE = require('btce'),
     btceTrade = new BTCE(config.btce.apiKey, config.btce.secret),
     Deferred = require("promised-io/promise").Deferred;
@@ -25,9 +24,23 @@ module.exports = {
         return deferred.promise;
     },
 
+    createOrder: function (market, type, rate, amount) {
+        var deferred = new Deferred();
+
+        btceTrade.trade(market, type, rate, amount, function (err, data) {
+            if (!err) {
+                console.log('order successfull!');
+
+                deferred.resolve(data);
+            }
+            else {
+                deferred.reject(err);
+            }
+        });
+    },
+
     getExchangeInfo: function (market) {
         var deferred = new Deferred(),
-            self = this,
             response = {
                 exchangeName: this.exchangeName
             };

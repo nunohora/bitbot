@@ -38,17 +38,17 @@ module.exports = {
             base,
             alt,
             self = this,
-            response = {
-                exchangeName: this.exchangeName
-            };
+            response;
 
+        response = {
+            exchangeName: this.exchangeName
+        };
+
+        base = market.split("_")[0];
+        alt = market.split("_")[1];
+        
         response.buyltcFee = config[self.exchangeName].tradeFee;
         response.buybtcFee = config[self.exchangeName].tradeFee;
-
-        if (market === 'ltc_btc') {
-            base = 'ltc';
-            alt = 'btc';
-        }
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
         vircurex.getOrders(base, alt, function (err, data) {

@@ -1,47 +1,66 @@
 var config = require('./config'),
-    cryptsy = require('./exchanges/cryptsy'),
-    btce = require('./exchanges/btce'),
-    vircurex = require('./exchanges/vircurex'),
     _ = require('underscore'),
-    when = require('promised-io/promise').when;
-    all = require('promised-io/promise').all;
+    when = require('promised-io/promise').when,
+    all = require('promised-io/promise').all,
+    Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
 
-    interval: 5000,
+    market: 'LTC_BTC',
 
-    exchanges: [],
+    exchangeMarkets: [
+        require('./exchanges/cryptsy'),
+        require('./exchanges/vircurex'),
+        require('./exchanges/btce'),
+    ],
+
+    interval: 5000,
 
     tradeAmount: 1,
 
 	start: function () {
         console.log("starting bot");
-
         this.startLookingAtPrices();
 	},
 
     startLookingAtPrices: function () {
         var self = this,
-            hasFoundArb = false;
+            hasFoundArb = false,
+            interval;
         
         var getExchangesInfo = function () {
-            var group = all(
-                btce.getExchangeInfo(config.btce.ltcbtcMarket),
-                cryptsy.getExchangeInfo(config.cryptsy.ltcbtcMarket),
-                vircurex.getExchangeInfo(config.vircurex.ltcbtcMarket)
-            ).then(function (array) {
+            var group = all(self._getPromises()).then(function (array) {
                 hasFoundArb = self.calculateArbOpportunity(array);
-                
+
                 //escaping the setInterval
                 if (hasFoundArb) {
-                    self.makeTrade(hasFoundArb);
-                    clearInterval(getExchangesInfo);
+                    // self.makeTrade(hasFoundArb);
+                    clearInterval(interval);
                     console.log("INTERVAL ESCAPED!!!!");
                 }
             });
         };
 
-        setInterval(getExchangesInfo, self.interval);
+        interval = setInterval(getExchangesInfo, self.interval);
+    },
+
+    makeTrade: function (ex1, ex2) {},
+
+    checkBalances: function (ex1, ex2) {
+        var deferred = new Deferred(),
+            group = all(
+            ex1.getBalance('ltc'),
+            ex2.getBalance('btc')
+            ).then(function (array) {
+                if (array[0] > this.tradeAmount && array[1] > this.tradeAmount) {
+                    deferred.resolve(true);
+                }
+                else {
+                    deferred.resolve(false);
+                }
+            });
+
+        return deferred.promise;
     },
 
     calculateArbOpportunity: function (exchanges) {
@@ -50,8 +69,12 @@ module.exports = {
             arbFound = false;
 
         //compare all exchanges prices from each exchange with each other
-        _.each(exchanges, function (ex1) {
-            _.some(exchanges, function (ex2) {
+        for (var i = 0; i < exchanges.length; i++) {
+            var ex1 = exchanges[i];
+
+            for (var j = 0; j < exchanges.length; j++) {
+                var ex2 = exchanges[j];
+
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arbFound = this.calculateViability(ex1, ex2);
 
@@ -62,14 +85,16 @@ module.exports = {
                         console.log('buy ' + this.tradeAmount + ' ltc for ' + arbFound.ex1.toBuy + ' in ' + arbFound.ex1.name + ' and sell ' + this.tradeAmount + ' ltc for ' + arbFound.ex2.toSell + ' in ' + arbFound.ex2.name);
                         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
 
+                        break;
                     }
-                    return arbFound;
                 }
-            }, this);
+            }
 
             exArray[ex1.exchangeName] = true;
-        }, this);
-
+            if (arbFound) {
+                break;
+            }
+        }
         return arbFound;
     },
 
@@ -110,5 +135,13 @@ module.exports = {
         else {
             return false;
         }
-    }
+    },
+
+    _getPromises: function () {
+        var promises = [];
+        
+        _.each(this.exchangeMarkets, function (market) {
+            market.getExchangeInfo(config[market.exchangeName].marketMap[this.market]);
+        }, this);
+    },
 };
