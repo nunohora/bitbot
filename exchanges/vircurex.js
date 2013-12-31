@@ -1,6 +1,7 @@
 var config = require('./../config'),
     Deferred = require("promised-io/promise").Deferred,
     all = require("promised-io/promise").all,
+    when = require('promised-io/promise').when,
     _ = require('underscore'),
     Vircurex = require('vircurex'),
 	vircurex = new Vircurex(config.vircurex.username, {
@@ -33,8 +34,50 @@ module.exports = {
         return deferred.promise;
     },
 
-    getExchangeInfo: function (market) {
+    createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred(),
+            realMarket =  config[this.exchangeName].marketMap[market],
+            self = this,
+            currency1,
+            currency2;
+
+        currency1 = realMarket.split("_")[0];
+        currency2 = realMarket.split("_")[1];
+ 
+        amount = 0;
+        
+        vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
+            if (!err) {
+                when(self._releaseOrder(data)).then(function (response) {
+                    deferred.resolve(response);
+                });
+            }
+            else {
+                deferred.reject(err);
+            }
+        });
+
+        return deferred.promise;
+    },
+
+    _releaseOrder: function (orderId) {
+        var deferred = new Deferred();
+
+        vircurex.releaseOrder(orderId, function (err, data) {
+            if (!err) {
+                deferred.resolve(data);
+            }
+            else {
+                deferred.reject(err);
+            }
+        });
+
+        return deferred.promise;
+    },
+
+    getExchangeInfo: function () {
+        var deferred = new Deferred(),
+            market = config[this.exchangeName].marketMap[config.market],
             base,
             alt,
             self = this,

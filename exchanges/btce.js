@@ -27,10 +27,10 @@ module.exports = {
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
 
+        amount = 0;
+        
         btceTrade.trade(market, type, rate, amount, function (err, data) {
             if (!err) {
-                console.log('order successfull!');
-
                 deferred.resolve(data);
             }
             else {
@@ -39,8 +39,9 @@ module.exports = {
         });
     },
 
-    getExchangeInfo: function (market) {
+    getExchangeInfo: function () {
         var deferred = new Deferred(),
+            market = config[this.exchangeName].marketMap[config.market],
             response = {
                 exchangeName: this.exchangeName
             };
@@ -48,7 +49,6 @@ module.exports = {
         response.buyltcFee = config[this.exchangeName].tradeFee;
         response.buybtcFee = config[this.exchangeName].tradeFee;
 
-        // console.log('Getting Market Prices for: ', this.exchangeName);
         btceTrade.depth({pair: market}, function (err, data) {
             if (!err) {
                 var bestPrices = {

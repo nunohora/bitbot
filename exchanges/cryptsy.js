@@ -24,10 +24,25 @@ module.exports = {
 
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
+            marketId = config[this.exchangeName].marketMap[market];
+
+        amount = 0;
+        
+        client.createorder(marketId, type, amount, rate, function () {
+            if (!data.error) {
+                deferred.resolve(data);
+            }
+            else {
+                deferred.reject(data.error);
+            }
+        });
+
+        return deferred.promise;
     },
 
-    getExchangeInfo: function (market) {
+    getExchangeInfo: function () {
         var deferred = new Deferred(),
+            market = config[this.exchangeName].marketMap[config.market],
             self = this,
             response = {
                 exchangeName: this.exchangeName
