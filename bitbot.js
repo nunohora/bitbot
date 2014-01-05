@@ -6,11 +6,11 @@ var config = require('./config'),
 
 module.exports = {
 
-    exchangeMarkets: [
-        require('./exchanges/cryptsy'),
-        require('./exchanges/vircurex'),
-        require('./exchanges/btce'),
-    ],
+    exchangeMarkets: {
+        'cryptsy': require('./exchanges/cryptsy'),
+        'vircurex': require('./exchanges/vircurex'),
+        'btce': require('./exchanges/btce')
+    },
 
 	start: function () {
         console.log("starting bot");
@@ -23,9 +23,9 @@ module.exports = {
             interval;
         
         var getExchangesInfo = function () {
-            var group = all(self.exchangeMarkets[0].getExchangeInfo(),
-                            self.exchangeMarkets[1].getExchangeInfo(),
-                            self.exchangeMarkets[2].getExchangeInfo()
+            var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
+                            self.exchangeMarkets['vircurex'].getExchangeInfo(),
+                            self.exchangeMarkets['btce'].getExchangeInfo()
                         ).then(function (array) {
 
                 hasFoundArb = self.calculateArbOpportunity(array);
@@ -49,25 +49,23 @@ module.exports = {
             self = this,
             maxAmount;
 
-        // when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
-        //     ).then(function (array) {
-        //         if (array.) {
-        //             this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount);        
-        //         }
-        //     })
-
+        when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
+            ).then(function (array) {
+                console.log("CHECK BALANCES RESULT: ", array);
+                // this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount); 
+            });
     
     console.log('arb: ', arb);
 
-    this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount);
-    this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, config.tradeAmount);
+    // this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount);
+    // this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, config.tradeAmount);
     },
 
     checkBalances: function (ex1, ex2) {
         var deferred = new Deferred(),
             group = all(
-            ex1.getBalance('ltc'),
-            ex2.getBalance('btc')
+            ex1.getBalance('buy'),
+            ex2.getBalance('sell')
             ).then(function (array) {
                 if (array[0] > config.tradeAmount && array[1] > config.tradeAmount) {
                     deferred.resolve(true);

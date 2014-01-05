@@ -7,8 +7,16 @@ module.exports = {
 
     exchangeName: 'btce',
 
-    getBalance: function (currency) {
-        var deferred = new Deferred();
+    getBalance: function (type) {
+        var deferred = new Deferred(),
+            currency;
+
+        if (type === 'buy') {
+            currency = config.market.split("_")[0];
+        }
+        else if (type === 'sell') {
+            currency = config.market.split("_")[1];
+        }
 
         console.log('Getting balance at ' + this.exchangeName + 'for ' + currency);
 

@@ -19,8 +19,16 @@ module.exports = {
 
     exchangeName: 'vircurex',
 
-    getBalance: function (currency) {
-        var deferred = new Deferred();
+    getBalance: function (type) {
+        var deferred = new Deferred(),
+            currency;
+
+        if (type === 'buy') {
+            currency = config.market.split("_")[0];
+        }
+        else if (type === 'sell') {
+            currency = config.market.split("_")[1];
+        }
 
         vircurex.getBalance(currency, function (err, data) {
             if (!err) {
