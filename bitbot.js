@@ -21,8 +21,11 @@ module.exports = {
         var self = this,
             hasFoundArb = false,
             interval;
-        
+
         var getExchangesInfo = function () {
+
+            console.log('*** Checking Exchange Prices *** ');
+
             var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
                             self.exchangeMarkets['vircurex'].getExchangeInfo(),
                             self.exchangeMarkets['btce'].getExchangeInfo()
@@ -47,18 +50,19 @@ module.exports = {
         var ex1 = arb.ex1,
             ex2 = arb.ex2,
             self = this,
-            maxAmount;
+            maxAmount = arb.maxAmount;
 
         when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
-            ).then(function (array) {
-                console.log("CHECK BALANCES RESULT: ", array);
-                // this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount); 
-            });
-    
-    console.log('arb: ', arb);
+            ).then(function (balances) {
+                console.log("CHECK BALANCES RESULT: ", balances);
 
-    // this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, config.tradeAmount);
-    // this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, config.tradeAmount);
+                if (balances[0] >= maxAmount && balances[1] >= maxAmount) {
+                    this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
+                    this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
+                }
+            });
+
+        console.log('arb: ', arb);
     },
 
     checkBalances: function (ex1, ex2) {
@@ -76,10 +80,6 @@ module.exports = {
             });
 
         return deferred.promise;
-    },
-
-    _getMaxAmount: function (arb) {
-
     },
 
     calculateArbOpportunity: function (exchanges) {
@@ -101,7 +101,7 @@ module.exports = {
                         console.log("\007");
                         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
                         console.log('Found a candidate!!!');
-                        console.log('buy ' + config.tradeAmount + ' ltc for ' + arbFound.ex1.toBuy + ' in ' + arbFound.ex1.name + ' and sell ' + config.tradeAmount + ' ltc for ' + arbFound.ex2.toSell + ' in ' + arbFound.ex2.name);
+                        console.log('buy ' + arbFound.maxAmount + ' ltc for ' + arbFound.ex1.toBuy + ' in ' + arbFound.ex1.name + ' and sell ' + arbFound.maxAmount + ' ltc for ' + arbFound.ex2.toSell + ' in ' + arbFound.ex2.name);
                         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
 
                         break;
@@ -136,6 +136,9 @@ module.exports = {
             amountToSell = (ex2.bestPrices.highestSellPrice.price * amount) * (1 - ex2.buybtcFee),
             maxAmount;
 
+        console.log('Comparing ' + ex1.exchangeName + ' to ' + ex2.exchangeName);
+        console.log(amountToBuy - amountToSell);
+        console.log('%%%%%');
         if (amountToBuy - amountToSell > 0) {
             if (ex1.bestPrices.lowestBuyPrice.quantity < amount) {
                 maxAmount = ex1.bestPrices.lowestBuyPrice.quantity;
@@ -149,13 +152,13 @@ module.exports = {
                 ex1: {
                     name: ex1.exchangeName,
                     toBuy: ex1.bestPrices.lowestBuyPrice.price,
-                    maxAmount: maxAmount
                 },
                 ex2: {
                     name: ex2.exchangeName,
                     toSell: ex2.bestPrices.highestSellPrice.price,
-                    maxAmount: maxAmount
-                }
+                },
+                maxAmount: maxAmount
+
             };
         }
         else {

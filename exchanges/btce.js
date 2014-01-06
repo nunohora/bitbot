@@ -36,7 +36,7 @@ module.exports = {
         var deferred = new Deferred();
 
         amount = 0;
-        
+
         btceTrade.trade(market, type, rate, amount, function (err, data) {
             if (!err) {
                 deferred.resolve(data);
@@ -54,6 +54,8 @@ module.exports = {
                 exchangeName: this.exchangeName
             };
 
+        console.log('Checking prices for ' + this.exchangeName);
+
         response.buyltcFee = config[this.exchangeName].tradeFee;
         response.buybtcFee = config[this.exchangeName].tradeFee;
 
@@ -66,10 +68,10 @@ module.exports = {
 
                 bestPrices.lowestBuyPrice.price = data.asks[0][0];
                 bestPrices.lowestBuyPrice.quantity = data.asks[0][1];
-                
+
                 bestPrices.highestSellPrice.price = data.bids[0][0];
                 bestPrices.highestSellPrice.quantity = data.bids[0][1];
-                
+
                 response.bestPrices = bestPrices;
 
                 deferred.resolve(response);

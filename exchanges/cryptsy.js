@@ -35,7 +35,7 @@ module.exports = {
             marketId = config[this.exchangeName].marketMap[market];
 
         amount = 0;
-        
+
         client.createorder(marketId, type, amount, rate, function () {
             if (!data.error) {
                 deferred.resolve(data);
@@ -56,6 +56,8 @@ module.exports = {
                 exchangeName: this.exchangeName
             };
 
+        console.log('Checking prices for ' + this.exchangeName);
+
         response.buyltcFee = config[self.exchangeName].buyltcFee;
         response.buybtcFee = config[self.exchangeName].buybtcFee;
 
@@ -70,10 +72,10 @@ module.exports = {
 
                 bestPrices.lowestBuyPrice.price = data.sellorders[0].sellprice;
                 bestPrices.lowestBuyPrice.quantity = data.sellorders[0].quantity;
-                
+
                 bestPrices.highestSellPrice.price = data.buyorders[0].buyprice;
                 bestPrices.highestSellPrice.quantity = data.buyorders[0].buyprice;
-                
+
                 response.bestPrices = bestPrices;
 
                 deferred.resolve(response);

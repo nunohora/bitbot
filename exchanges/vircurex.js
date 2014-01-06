@@ -51,9 +51,9 @@ module.exports = {
 
         currency1 = realMarket.split("_")[0];
         currency2 = realMarket.split("_")[1];
- 
+
         amount = 0;
-        
+
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
             if (!err) {
                 when(self._releaseOrder(data)).then(function (response) {
@@ -95,9 +95,11 @@ module.exports = {
             exchangeName: this.exchangeName
         };
 
+        console.log('Checking prices for ' + this.exchangeName);
+
         base = market.split("_")[0];
         alt = market.split("_")[1];
-        
+
         response.buyltcFee = config[self.exchangeName].tradeFee;
         response.buybtcFee = config[self.exchangeName].tradeFee;
 
@@ -111,10 +113,10 @@ module.exports = {
 
                 bestPrices.lowestBuyPrice.price = data.asks[0][0];
                 bestPrices.lowestBuyPrice.quantity = data.asks[0][1];
-                
+
                 bestPrices.highestSellPrice.price = data.bids[0][0];
                 bestPrices.highestSellPrice.quantity = data.bids[0][1];
-                
+
                 response.bestPrices = bestPrices;
 
                 deferred.resolve(response);
