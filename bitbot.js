@@ -35,9 +35,8 @@ module.exports = {
 
                 //escaping the setInterval
                 if (hasFoundArb) {
-                    console.log("HAS fOUND ARB: ", hasFoundArb);
-                    self.makeTrade(hasFoundArb);
                     clearInterval(interval);
+                    self.makeTrade(hasFoundArb);
                     console.log("INTERVAL ESCAPED!!!!");
                 }
             });
@@ -54,12 +53,11 @@ module.exports = {
 
         when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
             ).then(function (balances) {
-                console.log("CHECK BALANCES RESULT: ", balances);
-
-                if (balances[0] >= maxAmount && balances[1] >= maxAmount) {
-                    this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
-                    this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
-                }
+                console.log("BALANCES: ", balances);
+                // if (balances[0] >= maxAmount && balances[1] >= maxAmount) {
+                    self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
+                    self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
+                // }
             });
 
         console.log('arb: ', arb);
@@ -70,14 +68,10 @@ module.exports = {
             group = all(
             ex1.getBalance('buy'),
             ex2.getBalance('sell')
-            ).then(function (array) {
-                if (array[0] > config.tradeAmount && array[1] > config.tradeAmount) {
-                    deferred.resolve(true);
+                ).then(function (balances) {
+                    deferred.resolve(balances);
                 }
-                else {
-                    deferred.resolve(false);
-                }
-            });
+            );
 
         return deferred.promise;
     },
@@ -134,13 +128,10 @@ module.exports = {
         var amount = config.tradeAmount,
             amountToBuy = (ex1.bestPrices.lowestBuyPrice.price * amount) * (1 - ex1.buyltcFee),
             amountToSell = (ex2.bestPrices.highestSellPrice.price * amount) * (1 - ex2.buybtcFee),
-            maxAmount;
+            maxAmount = amount;
 
-        console.log('Comparing ' + ex1.exchangeName + ' to ' + ex2.exchangeName);
-        console.log(amountToBuy - amountToSell);
-        console.log('%%%%%');
         if (amountToBuy - amountToSell > 0) {
-            if (ex1.bestPrices.lowestBuyPrice.quantity < amount) {
+            if (ex1.bestPrices.lowestBuyPrice.quantity < maxAmount) {
                 maxAmount = ex1.bestPrices.lowestBuyPrice.quantity;
             }
 

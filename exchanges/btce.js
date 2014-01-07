@@ -22,7 +22,7 @@ module.exports = {
 
         btceTrade.getInfo(function (err, data) {
             if (!err) {
-                deferred.resolve(data.return.funds[currency]);
+                deferred.resolve(data.return.funds[currency.toLowerCase()]);
             }
             else {
                 deferred.reject(err);
@@ -50,6 +50,7 @@ module.exports = {
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
+            self = this;
             response = {
                 exchangeName: this.exchangeName
             };
@@ -74,9 +75,11 @@ module.exports = {
 
                 response.bestPrices = bestPrices;
 
+                console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve(response);
             }
             else {
+                console.log('Error! Failed to get prices for ' + self.exchangeName);
                 deferred.reject(err);
             }
         });

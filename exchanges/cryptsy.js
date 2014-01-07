@@ -78,9 +78,11 @@ module.exports = {
 
                 response.bestPrices = bestPrices;
 
+                console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve(response);
             }
             else {
+                console.log('Error! Failed to get prices for ' + self.exchangeName);
                 deferred.reject(data.error);
             }
         });
