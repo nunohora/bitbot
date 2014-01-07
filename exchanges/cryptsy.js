@@ -74,7 +74,7 @@ module.exports = {
                 bestPrices.lowestBuyPrice.quantity = data.sellorders[0].quantity;
 
                 bestPrices.highestSellPrice.price = data.buyorders[0].buyprice;
-                bestPrices.highestSellPrice.quantity = data.buyorders[0].buyprice;
+                bestPrices.highestSellPrice.quantity = data.buyorders[0].quantity;
 
                 response.bestPrices = bestPrices;
 
