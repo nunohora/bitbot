@@ -23,7 +23,6 @@ module.exports = {
             interval;
 
         var getExchangesInfo = function () {
-
             console.log('*** Checking Exchange Prices *** ');
 
             var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),

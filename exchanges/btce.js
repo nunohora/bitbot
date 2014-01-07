@@ -18,7 +18,7 @@ module.exports = {
             currency = config.market.split("_")[1];
         }
 
-        console.log('Getting balance at ' + this.exchangeName + 'for ' + currency);
+        console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
 
         btceTrade.getInfo(function (err, data) {
             if (!err) {

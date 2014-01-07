@@ -18,6 +18,8 @@ module.exports = {
             currency = config.market.split("_")[1];
         }
 
+        console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
+
         client.getinfo(function (data) {
             if (!data.error) {
                 deferred.resolve(data.balances_available[currency.toUpperCase()]);
