@@ -24,10 +24,10 @@ module.exports = {
             currency;
 
         if (type === 'buy') {
-            currency = config.market.split("_")[0];
+            currency = config.market.split("_")[1];
         }
         else if (type === 'sell') {
-            currency = config.market.split("_")[1];
+            currency = config.market.split("_")[0];
         }
 
         console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
@@ -53,6 +53,8 @@ module.exports = {
 
         currency1 = realMarket.split("_")[0];
         currency2 = realMarket.split("_")[1];
+
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + 'in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         amount = 0;
 

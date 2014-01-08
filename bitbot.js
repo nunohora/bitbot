@@ -9,7 +9,8 @@ module.exports = {
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
-        'btce': require('./exchanges/btce')
+        'btce': require('./exchanges/btce'),
+        'crypto-trade': require('./exchanges/crypto-trade')
     },
 
 	start: function () {
@@ -27,7 +28,8 @@ module.exports = {
 
             var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
                             self.exchangeMarkets['vircurex'].getExchangeInfo(),
-                            self.exchangeMarkets['btce'].getExchangeInfo()
+                            self.exchangeMarkets['btce'].getExchangeInfo(),
+                            self.exchangeMarkets['crypto-trade'].getExchangeInfo()
                         ).then(function (array) {
 
                 hasFoundArb = self.calculateArbOpportunity(array);
@@ -53,13 +55,14 @@ module.exports = {
         when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
             ).then(function (balances) {
                 console.log("BALANCES: ", balances);
-                // if (balances[0] >= maxAmount && balances[1] >= maxAmount) {
+
+                if (balances[0] >= (maxAmount * ex1.toBuy) && balances[1] >= maxAmount) {
+                    console.log('Cool! There is enough balance to perform the transaction!');
+
                     self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
                     self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
-                // }
+                }
             });
-
-        console.log('arb: ', arb);
     },
 
     checkBalances: function (ex1, ex2) {

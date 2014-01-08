@@ -1,6 +1,6 @@
 var config = require('./../config');
 var BTCE = require('btce'),
-    btceTrade = new BTCE(config.btce.apiKey, config.btce.secret),
+    btceTrade = new BTCE(config['btce'].apiKey, config['btce'].secret),
     Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
@@ -12,10 +12,10 @@ module.exports = {
             currency;
 
         if (type === 'buy') {
-            currency = config.market.split("_")[0];
+            currency = config.market.split("_")[1];
         }
         else if (type === 'sell') {
-            currency = config.market.split("_")[1];
+            currency = config.market.split("_")[0];
         }
 
         console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
@@ -34,6 +34,8 @@ module.exports = {
 
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
+
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         amount = 0;
 

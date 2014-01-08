@@ -1,11 +1,11 @@
 var config = require('./../config');
-var cryptsy = require('cryptsy-api');
-var client = new cryptsy(config['cryptsy'].publicKey, config['cryptsy'].privateKey);
-var Deferred = require("promised-io/promise").Deferred;
+var CryptoTrade = require('../crypto-trade'),
+    cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret),
+    Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
 
-    exchangeName: 'cryptsy',
+    exchangeName: 'crypto-trade',
 
     getBalance: function (type) {
         var deferred = new Deferred(),
@@ -20,12 +20,12 @@ module.exports = {
 
         console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
 
-        client.getinfo(function (data) {
-            if (!data.error) {
-                deferred.resolve(data.balances_available[currency.toUpperCase()]);
+        cryptoTrade.getInfo(function (err, data) {
+            if (!err) {
+                deferred.resolve(data.return.funds[currency.toLowerCase()]);
             }
             else {
-                deferred.reject(data.error);
+                deferred.reject(err);
             }
         });
 
@@ -34,51 +34,46 @@ module.exports = {
 
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
-            marketId = config[this.exchangeName].marketMap[market];
 
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + 'in market ' + market + ' to ' + type + ' at rate ' + rate);
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        amount = 0;
+        // amount = 0;
 
-        client.createorder(marketId, type, amount, rate, function (data) {
-            if (!data.error) {
+        cryptoTrade.trade(market, type, rate, amount, function (err, data) {
+            if (!err) {
                 deferred.resolve(data);
             }
             else {
-                deferred.reject(data.error);
+                deferred.reject(err);
             }
         });
-
-        return deferred.promise;
     },
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
-            self = this,
+            self = this;
             response = {
                 exchangeName: this.exchangeName
             };
 
         console.log('Checking prices for ' + this.exchangeName);
 
-        response.buyltcFee = config[self.exchangeName].buyltcFee;
-        response.buybtcFee = config[self.exchangeName].buybtcFee;
+        response.buyltcFee = config[this.exchangeName].tradeFee;
+        response.buybtcFee = config[this.exchangeName].tradeFee;
 
-        // console.log('Getting Market Prices for: ', this.exchangeName);
-        client.marketorders(market, function (data) {
-            if (!data.error) {
-
+        cryptoTrade.depth({pair: market}, function (err, data) {
+            if (!err) {
                 var bestPrices = {
                     lowestBuyPrice: {},
                     highestSellPrice: {}
                 };
 
-                bestPrices.lowestBuyPrice.price = data.sellorders[0].sellprice;
-                bestPrices.lowestBuyPrice.quantity = data.sellorders[0].quantity;
+                bestPrices.lowestBuyPrice.price = data.asks[0][0];
+                bestPrices.lowestBuyPrice.quantity = data.asks[0][1];
 
-                bestPrices.highestSellPrice.price = data.buyorders[0].buyprice;
-                bestPrices.highestSellPrice.quantity = data.buyorders[0].quantity;
+                bestPrices.highestSellPrice.price = data.bids[0][0];
+                bestPrices.highestSellPrice.quantity = data.bids[0][1];
 
                 response.bestPrices = bestPrices;
 
@@ -87,7 +82,7 @@ module.exports = {
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(data.error);
+                deferred.reject(err);
             }
         });
 
