@@ -4,17 +4,17 @@ var crypto = require('crypto');
 var querystring = require('querystring');
 var util = require('util');
 
-module.exports = CryptoTrade;
+module.exports = Bter;
 
-function CryptoTrade(apiKey, secret) {
+function Bter(apiKey, secret) {
   this.apiKey = apiKey;
   this.secret = secret;
-  this.urlGet = 'https://crypto-trade.com/api/1/';
-  this.urlPost = 'https://crypto-trade.com/api/1/private';
+  this.urlGet = 'https://bter.com/api/1/';
+  this.urlPost = 'https://bter.com/api/1/private';
   this.nonce = this.getTimestamp(Date.now());
 }
 
-CryptoTrade.prototype.getTimestamp = function(time) {
+Bter.prototype.getTimestamp = function(time) {
   if (util.isDate(time)) {
     return Math.round(time.getTime() / 1000);
   }
@@ -27,15 +27,15 @@ CryptoTrade.prototype.getTimestamp = function(time) {
   return 0;
 };
 
-CryptoTrade.prototype.getInfo = function(callback) {
-  this.query('getinfo', null, callback);
+Bter.prototype.getInfo = function(callback) {
+  this.query('getfunds', null, callback);
 };
 
-CryptoTrade.prototype.trade = function(params, callback) {
+Bter.prototype.trade = function(params, callback) {
   this.query('trade', params, callback);
 };
 
-CryptoTrade.prototype.depth = function(params, callback) {
+Bter.prototype.depth = function(params, callback) {
   if (!params) {
     params = {};
   }
@@ -49,10 +49,9 @@ CryptoTrade.prototype.depth = function(params, callback) {
   this.getHTTPS(url, callback);
 };
 
-CryptoTrade.prototype.query = function(method, params, callback) {
+Bter.prototype.query = function(method, params, callback) {
   var _this = this;
   var content = {
-    'method': method,
     'nonce': ++this.nonce,
   };
 
@@ -109,7 +108,7 @@ CryptoTrade.prototype.query = function(method, params, callback) {
   req.end();
 };
 
-CryptoTrade.prototype.ticker = function(params, callback) {
+Bter.prototype.ticker = function(params, callback) {
   if (!params) {
     params = {};
   }
@@ -118,12 +117,12 @@ CryptoTrade.prototype.ticker = function(params, callback) {
     params.pair = 'btc_usd';
   }
 
-  var url = this.urlGet + params.pair + '/ticker';
+  var url = this.urlGet + 'ticker/' + params.pair;
 
   this.getHTTPS(url, callback);
 };
 
-CryptoTrade.prototype.getHTTPS = function(getUrl, callback) {
+Bter.prototype.getHTTPS = function(getUrl, callback) {
 
   var options = url.parse(getUrl);
   options.method = 'GET';

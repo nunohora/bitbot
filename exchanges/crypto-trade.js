@@ -22,7 +22,9 @@ module.exports = {
 
         cryptoTrade.getInfo(function (err, data) {
             if (!err) {
-                deferred.resolve(data.return.funds[currency.toLowerCase()]);
+                console.log("RESPONSE!!!");
+                console.log(data);
+                deferred.resolve(data.available_funds[currency.toLowerCase()]);
             }
             else {
                 deferred.reject(err);
@@ -37,7 +39,7 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
+        amount = 0;
 
         cryptoTrade.trade(market, type, rate, amount, function (err, data) {
             if (!err) {

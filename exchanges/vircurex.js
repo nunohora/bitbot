@@ -54,7 +54,7 @@ module.exports = {
         currency1 = realMarket.split("_")[0];
         currency2 = realMarket.split("_")[1];
 
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + 'in market ' + market + ' to ' + type + ' at rate ' + rate);
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         amount = 0;
 

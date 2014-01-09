@@ -10,7 +10,8 @@ module.exports = {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        'crypto-trade': require('./exchanges/crypto-trade')
+        'crypto-trade': require('./exchanges/crypto-trade'),
+        'bter': require('./exchanges/bter')
     },
 
 	start: function () {
@@ -29,7 +30,8 @@ module.exports = {
             var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
                             self.exchangeMarkets['vircurex'].getExchangeInfo(),
                             self.exchangeMarkets['btce'].getExchangeInfo(),
-                            self.exchangeMarkets['crypto-trade'].getExchangeInfo()
+                            self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
+                            self.exchangeMarkets['bter'].getExchangeInfo()
                         ).then(function (array) {
 
                 hasFoundArb = self.calculateArbOpportunity(array);
