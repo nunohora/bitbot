@@ -39,7 +39,7 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        amount = 0;
+        // amount = 0;
 
         cryptoTrade.trade(market, type, rate, amount, function (err, data) {
             if (!err) {
