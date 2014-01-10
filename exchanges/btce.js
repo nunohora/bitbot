@@ -40,12 +40,14 @@ module.exports = {
         // amount = 0;
 
         btceTrade.trade({
-            market: market,
+            market: config[this.exchangeName].marketMap[market],
             type: type,
             rate: rate,
             amount: amount
         }, function (err, data) {
             if (!err) {
+                console.log('BTCE TRADE');
+                console.log(data);
                 deferred.resolve(data);
             }
             else {

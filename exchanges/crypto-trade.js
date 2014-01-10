@@ -41,7 +41,12 @@ module.exports = {
 
         // amount = 0;
 
-        cryptoTrade.trade(market, type, rate, amount, function (err, data) {
+        cryptoTrade.trade({
+            market: market,
+            type: type,
+            rate: rate,
+            amount: amount
+        }, function (err, data) {
             if (!err) {
                 deferred.resolve(data);
             }
