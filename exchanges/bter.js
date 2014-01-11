@@ -7,16 +7,19 @@ module.exports = {
 
     exchangeName: 'bter',
 
+    balances: {},
+    
+    latestPrices: {},
+    
     getBalance: function () {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Getting balances for ' + this.exchangeName);
 
         bter.getInfo(function (err, data) {
             if (!err) {
-                console.log("RESPONSE!!!");
-                console.log(data);
-                deferred.resolve(data);
+                deferred.resolve();
             }
             else {
                 deferred.reject(err);

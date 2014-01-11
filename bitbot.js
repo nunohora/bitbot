@@ -8,9 +8,9 @@ module.exports = {
 
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
-        // 'vircurex': require('./exchanges/vircurex'),
+        'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        // 'crypto-trade': require('./exchanges/crypto-trade'),
+        'crypto-trade': require('./exchanges/crypto-trade'),
         'bter': require('./exchanges/bter')
     },
 
@@ -36,9 +36,8 @@ module.exports = {
 
             var group = all(_.each(self.exchangeMarkets, function (market) {
                 market.getExchangeInfo();
-            }, self)).then(function (marketPrices) {
-
-                hasFoundArb = self.calculateArbOpportunity(marketPrices);
+            }, self)).then(function () {
+                hasFoundArb = self.calculateArbOpportunity();
 
                 //escaping the setInterval
                 if (hasFoundArb) {
@@ -58,17 +57,17 @@ module.exports = {
             self = this,
             maxAmount = arb.maxAmount;
 
-        when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name])
-            ).then(function (balances) {
-                console.log("BALANCES: ", balances);
+        when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name]))
+        .then(function (balances) {
+            console.log("BALANCES: ", balances);
 
-                if (balances[0] >= (maxAmount * ex1.toBuy) && balances[1] >= maxAmount) {
-                    console.log('Cool! There is enough balance to perform the transaction!');
+            if (balances[0] >= (maxAmount * ex1.toBuy) && balances[1] >= maxAmount) {
+                console.log('Cool! There is enough balance to perform the transaction!');
 
-                    self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
-                    self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
-                }
-            });
+                self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
+                self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
+            }
+        });
     },
 
     checkBalances: function (ex1, ex2) {
@@ -84,7 +83,7 @@ module.exports = {
         return deferred.promise;
     },
 
-    calculateArbOpportunity: function (exchanges) {
+    calculateArbOpportunity: function () {
         var exArray = [],
             viability,
             arbFound = false;

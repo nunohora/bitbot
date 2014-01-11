@@ -19,22 +19,21 @@ module.exports = {
 
     exchangeName: 'vircurex',
 
-    getBalance: function (type) {
+    balances: {},
+
+    getBalance: function () {
         var deferred = new Deferred(),
-            currency;
+            self = this;
 
-        if (type === 'buy') {
-            currency = config.market.split("_")[1];
-        }
-        else if (type === 'sell') {
-            currency = config.market.split("_")[0];
-        }
+        console.log('Getting balances for ' + this.exchangeName);
 
-        console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
-
-        vircurex.getBalance(currency, function (err, data) {
+        vircurex.getBalances(function (err, data) {
             if (!err) {
-                deferred.resolve(data.balance);
+                _.each(data.balances, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance.availablebalance;
+                });
+
+                deferred.resolve();
             }
             else {
                 deferred.reject(err);

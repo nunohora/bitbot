@@ -79,11 +79,13 @@ CryptoTrade.prototype.query = function(method, params, callback) {
 
   options.method = 'POST';
   options.headers = {
-    'Key': this.apiKey,
-    'Sign': sign,
+    'AuthKey': this.apiKey,
+    'AuthSign': sign,
     'content-type': 'application/x-www-form-urlencoded',
     'content-length': content.length,
   };
+
+  console.log(options);
 
   var req = https.request(options, function(res) {
     var data = '';
@@ -113,7 +115,7 @@ CryptoTrade.prototype.ticker = function(params, callback) {
     params.pair = 'btc_usd';
   }
 
-  var url = this.urlGet + params.pair + '/ticker';
+  var url = this.urlGet + 'ticker/' + params.pair;
 
   this.getHTTPS(url, callback);
 };

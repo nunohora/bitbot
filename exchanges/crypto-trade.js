@@ -1,4 +1,6 @@
 var config = require('./../config');
+var _ = require('underscore');
+
 var CryptoTrade = require('../crypto-trade'),
     cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret),
     Deferred = require("promised-io/promise").Deferred;
@@ -7,16 +9,21 @@ module.exports = {
 
     exchangeName: 'crypto-trade',
 
+    balances: {},
+
     getBalance: function (type) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Getting balances for ' + this.exchangeName);
 
         cryptoTrade.getInfo(function (err, data) {
             if (!err) {
-                console.log("RESPONSE!!!");
-                console.log(data);
-                deferred.resolve(data);
+                _.each(data.data.funds, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance;
+                }, self);
+
+                deferred.resolve();
             }
             else {
                 deferred.reject(err);

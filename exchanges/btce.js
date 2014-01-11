@@ -10,16 +10,15 @@ module.exports = {
     balances: {},
 
     getBalance: function () {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Getting balances for ' + this.exchangeName);
 
         btceTrade.getInfo(function (err, data) {
             if (!err) {
-                console.log('BTCE');
-                console.log(data);
-
-                deferred.resolve(data);
+                self.balances = data.return.funds;
+                deferred.resolve();
             }
             else {
                 deferred.reject(err);

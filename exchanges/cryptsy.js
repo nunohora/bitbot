@@ -1,5 +1,6 @@
 var config = require('./../config');
 var cryptsy = require('cryptsy-api');
+var _ = require('underscore');
 var client = new cryptsy(config['cryptsy'].publicKey, config['cryptsy'].privateKey);
 var Deferred = require("promised-io/promise").Deferred;
 
@@ -7,14 +8,21 @@ module.exports = {
 
     exchangeName: 'cryptsy',
 
+    balances: {},
+    
     getBalance: function () {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Getting balances for ' + this.exchangeName);
 
         client.getinfo(function (data) {
             if (!data.error) {
-                deferred.resolve(data);
+                _.each(data.balances_available, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance;
+                });
+                
+                deferred.resolve();
             }
             else {
                 deferred.reject(data.error);
