@@ -7,22 +7,19 @@ module.exports = {
 
     exchangeName: 'btce',
 
-    getBalance: function (type) {
-        var deferred = new Deferred(),
-            currency;
+    balances: {},
 
-        if (type === 'buy') {
-            currency = config.market.split("_")[1];
-        }
-        else if (type === 'sell') {
-            currency = config.market.split("_")[0];
-        }
+    getBalance: function () {
+        var deferred = new Deferred();
 
-        console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
+        console.log('Getting balances for ' + this.exchangeName);
 
         btceTrade.getInfo(function (err, data) {
             if (!err) {
-                deferred.resolve(data.return.funds[currency.toLowerCase()]);
+                console.log('BTCE');
+                console.log(data);
+
+                deferred.resolve(data);
             }
             else {
                 deferred.reject(err);
@@ -40,7 +37,7 @@ module.exports = {
         // amount = 0;
 
         btceTrade.trade({
-            market: config[this.exchangeName].marketMap[market],
+            pair: config[this.exchangeName].marketMap[market],
             type: type,
             rate: rate,
             amount: amount

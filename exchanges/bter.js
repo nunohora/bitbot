@@ -7,24 +7,16 @@ module.exports = {
 
     exchangeName: 'bter',
 
-    getBalance: function (type) {
-        var deferred = new Deferred(),
-            currency;
+    getBalance: function () {
+        var deferred = new Deferred();
 
-        if (type === 'buy') {
-            currency = config.market.split("_")[1];
-        }
-        else if (type === 'sell') {
-            currency = config.market.split("_")[0];
-        }
-
-        console.log('Getting balance at ' + this.exchangeName + ' for ' + currency);
+        console.log('Getting balances for ' + this.exchangeName);
 
         bter.getInfo(function (err, data) {
             if (!err) {
                 console.log("RESPONSE!!!");
                 console.log(data);
-                deferred.resolve(data.available_funds[currency.toLowerCase()]);
+                deferred.resolve(data);
             }
             else {
                 deferred.reject(err);

@@ -69,9 +69,6 @@ Bter.prototype.query = function(method, params, callback) {
 
   content = querystring.stringify(content);
 
-  console.log('content');
-  console.log(content);
-
   var sign = crypto
     .createHmac('sha512', new Buffer(this.secret, 'utf8'))
     .update(new Buffer(content, 'utf8'))
@@ -86,8 +83,6 @@ Bter.prototype.query = function(method, params, callback) {
     'content-type': 'application/x-www-form-urlencoded',
     'content-length': content.length,
   };
-
-  console.log(options);
 
   var req = https.request(options, function(res) {
     var data = '';
