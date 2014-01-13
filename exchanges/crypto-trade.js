@@ -1,5 +1,6 @@
 var config = require('./../config');
 var _ = require('underscore');
+var utils = require('../utils');
 
 var CryptoTrade = require('../crypto-trade'),
     cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret),
@@ -11,7 +12,7 @@ module.exports = {
 
     balances: {},
 
-    latestPrices: {},
+    prices: {},
 
     getBalance: function (type) {
         var deferred = new Deferred(),
@@ -57,36 +58,42 @@ module.exports = {
         });
     },
 
+    calculateProfit: function (amount) {
+        var sellFee = config[this.exchangeName].fees[config.market].sell;
+
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage);
+    },
+
+    calculateCost: function (amount) {
+        var buyFee = config[this.exchangeName].fees[config.market].buy;
+
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage);
+    },
+
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
-            response = {
-                exchangeName: this.exchangeName
-            };
 
         console.log('Checking prices for ' + this.exchangeName);
 
-        response.buyltcFee = config[this.exchangeName].tradeFee;
-        response.buybtcFee = config[this.exchangeName].tradeFee;
-
         cryptoTrade.depth({pair: market}, function (err, data) {
             if (!err) {
-                var bestPrices = {
-                    lowestBuyPrice: {},
-                    highestSellPrice: {}
+                var prices = {
+                    buy: {},
+                    sell: {}
                 };
 
-                bestPrices.lowestBuyPrice.price = data.asks[0][0];
-                bestPrices.lowestBuyPrice.quantity = data.asks[0][1];
+                prices.buy.price = data.asks[0][0];
+                prices.buy.quantity = data.asks[0][1];
 
-                bestPrices.highestSellPrice.price = data.bids[0][0];
-                bestPrices.highestSellPrice.quantity = data.bids[0][1];
+                prices.sell.price = data.bids[0][0];
+                prices.sell.quantity = data.bids[0][1];
 
-                self.latestPrices = bestPrices;
+                self.prices = prices;
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve(response);
+                deferred.resolve();
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);

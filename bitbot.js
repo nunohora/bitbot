@@ -19,9 +19,11 @@ module.exports = {
 
         console.log("starting bot");
 
-        all(_.each(self.exchangeMarkets, function (market) {
-            market.getBalance();
-        }, self))
+        all(self.exchangeMarkets['cryptsy'].getBalance(),
+            self.exchangeMarkets['vircurex'].getBalance(),
+            self.exchangeMarkets['btce'].getBalance(),
+            self.exchangeMarkets['crypto-trade'].getBalance(),
+            self.exchangeMarkets['bter'].getBalance())
         .then(function () {
             self.startLookingAtPrices();
         });
@@ -35,15 +37,18 @@ module.exports = {
         var getExchangesInfo = function () {
             console.log('*** Checking Exchange Prices for ' + config.market + ' *** ');
 
-            var group = all(_.each(self.exchangeMarkets, function (market) {
-                market.getExchangeInfo();
-            }, self)).then(function () {
+            var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
+                self.exchangeMarkets['vircurex'].getExchangeInfo(),
+                self.exchangeMarkets['btce'].getExchangeInfo(),
+                self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
+                self.exchangeMarkets['bter'].getExchangeInfo())
+            .then(function () {
                 hasFoundArb = self.calculateArbOpportunity();
 
                 //escaping the setInterval
                 if (hasFoundArb) {
                     clearInterval(interval);
-                    // self.makeTrade(hasFoundArb);
+                    self.makeTrade(hasFoundArb);
                     console.log("INTERVAL ESCAPED!!!!");
                 }
             });
@@ -55,20 +60,14 @@ module.exports = {
     makeTrade: function (arb) {
         var ex1 = arb.ex1,
             ex2 = arb.ex2,
-            self = this,
-            maxAmount = arb.maxAmount;
+            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()],
+            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()];
 
-        when(self.checkBalances(self.exchangeMarkets[ex1.name], self.exchangeMarkets[ex2.name]))
-        .then(function (balances) {
-            console.log("BALANCES: ", balances);
-
-            if (balances[0] >= (maxAmount * ex1.toBuy) && balances[1] >= maxAmount) {
-                console.log('Cool! There is enough balance to perform the transaction!');
-
-                self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.toBuy, maxAmount);
-                self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.toSell, maxAmount);
-            }
-        });
+        if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
+            console.log('Cool! There is enough balance to perform the transaction!');
+            this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
+            this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
+        }
     },
 
     checkBalances: function (ex1, ex2) {
@@ -87,13 +86,14 @@ module.exports = {
     calculateArbOpportunity: function () {
         var exArray = [],
             viability,
-            arbFound = false;
+            arbFound = false,
+            keys = _.keys(this.exchangeMarkets);
 
         //compare all exchanges prices from each exchange with each other
-        for (var i = 0; i < exchanges.length; i++) {
-            var ex1 = exchanges[i];
-            for (var j = 0; j < exchanges.length; j++) {
-                var ex2 = exchanges[j];
+        for (var i = 0, len = keys.length; i < len; i++) {
+            var ex1 = this.exchangeMarkets[keys[i]];
+            for (var j = 0; j < len; j++) {
+                var ex2 = this.exchangeMarkets[keys[j]];
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arbFound = this.calculateViability(ex1, ex2);
                     if (arbFound) {
@@ -112,10 +112,10 @@ module.exports = {
     calculateViability: function (ex1, ex2) {
         var isViable = false;
 
-        if (ex1.bestPrices.lowestBuyPrice.price < ex2.bestPrices.highestSellPrice.price) {
+        if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
-        else if (ex1.bestPrices.highestSellPrice.price > ex2.bestPrices.lowestBuyPrice.price) {
+        else if (ex1.prices.sell.price > ex2.prices.buy.price) {
             isViable = this.calculateAfterFees(ex2, ex1);
         }
 
@@ -129,56 +129,34 @@ module.exports = {
             amountToSell,
             cryptsyFee;
 
-            //so so dirty
-            if (ex1.exchangeName === 'cryptsy') {
-                cryptsyFee = (amount * ex1.bestPrices.lowestBuyPrice.price)*(ex1.buyltcFee);
-                amountToBuy = (amount * ex1.bestPrices.lowestBuyPrice.price) + cryptsyFee;
-            }
-            else {
-                amountToBuy = ((amount + (amount * ex1.buyltcFee)) * ex1.bestPrices.lowestBuyPrice.price).toFixed(8);
-            }
+        var cost = ex1.calculateCost(amount);
+        var profit = ex2.calculateProfit(amount);
 
-            amountToBuy = ((amount + (amount * ex1.buyltcFee))*ex1.bestPrices.lowestBuyPrice.price).toFixed(8);
-            amountToSell = ((ex2.bestPrices.highestSellPrice.price * amount).toFixed(8)*+(1 - ex2.buybtcFee)).toFixed(8);
+        if ((profit.profit - cost.cost).toFixed(8) > 0) {
 
-        if (this._isProfitable(amountToSell, amountToBuy) &&
-            this._hasLiquidity(ex1.bestPrices.lowestBuyPrice.quantity) &&
-            this._hasLiquidity(ex2.bestPrices.highestSellPrice.quantity)) {
-                
             console.log("\007");
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
             console.log('Found a candidate!!!');
-            console.log('Buying: ', ex1.exchangeName !== 'cryptsy' ? amount : (amount + (amount * ex1.buyltcFee)).toFixed(8) + ' ' + config.market.split("_")[0] + ' for ' + ex1.bestPrices.lowestBuyPrice.price + ' in ' + ex1.exchangeName);
-            console.log('Selling: ' + amount + ' ' + config.market.split("_")[0] +' for ' + ex2.bestPrices.highestSellPrice.price + ' in ' + ex2.exchangeName);
-            console.log('Profit: ' + (amountToSell - amountToBuy).toFixed(8) + ' ' + config.market.split("_")[1]);
+            console.log('Buying: ', cost.amount + ' ' + config.market.split("_")[0] + ' for ' + ex1.prices.buy.price + ' in ' + ex1.exchangeName);
+            console.log('Selling: ', profit.amount + ' ' + config.market.split("_")[0] + ' for ' + ex2.prices.sell.price + ' in ' + ex2.exchangeName);
+            console.log('Profit: ' + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
-
 
             return {
                 ex1: {
                     name: ex1.exchangeName,
-                    toBuy: ex1.bestPrices.lowestBuyPrice.price,
-                    amount: ex1.exchangeName === 'cryptsy' ? amount : (amount + (amount * ex1.buyltcFee)).toFixed(8)
+                    buy: ex1.prices.buy.price,
+                    amount: cost.amount
                 },
                 ex2: {
                     name: ex2.exchangeName,
-                    toSell: ex2.bestPrices.highestSellPrice.price,
-                    amount: amount
-                },
-                maxAmount: maxAmount
+                    sell: ex2.prices.sell.price,
+                    amount: profit.amount
+                }
             };
-
         }
         else {
             return false;
         }
-    },
-
-    _isProfitable: function (amountToSell, amountToBuy) {
-        return (amountToSell - amountToBuy) > 0 ? true : false;
-    },
-
-    _hasLiquidity: function (quantity) {
-        return quantity > config.tradeAmount ? true : false;
     }
 };

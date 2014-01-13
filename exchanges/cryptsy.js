@@ -1,5 +1,6 @@
 var config = require('./../config');
 var cryptsy = require('cryptsy-api');
+var utils = require('../utils');
 var _ = require('underscore');
 var client = new cryptsy(config['cryptsy'].publicKey, config['cryptsy'].privateKey);
 var Deferred = require("promised-io/promise").Deferred;
@@ -10,8 +11,8 @@ module.exports = {
 
     balances: {},
 
-    latestPrices: {},
-    
+    prices: {},
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -23,7 +24,7 @@ module.exports = {
                 _.each(data.balances_available, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 });
-                
+
                 deferred.resolve();
             }
             else {
@@ -54,38 +55,44 @@ module.exports = {
         return deferred.promise;
     },
 
+    calculateProfit: function (amount) {
+        var sellFee = config[this.exchangeName].fees[config.market].sell;
+
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage);
+    },
+
+    calculateCost: function (amount) {
+        var buyFee = config[this.exchangeName].fees[config.market].buy;
+
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage);
+    },
+
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
-            self = this,
-            response = {
-                exchangeName: this.exchangeName
-            };
+            self = this;
 
         console.log('Checking prices for ' + this.exchangeName);
-
-        response.buyltcFee = config[self.exchangeName].buyltcFee;
-        response.buybtcFee = config[self.exchangeName].buybtcFee;
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
         client.marketorders(market, function (data) {
             if (!data.error) {
 
-                var bestPrices = {
-                    lowestBuyPrice: {},
-                    highestSellPrice: {}
+                var prices = {
+                    buy: {},
+                    sell: {}
                 };
 
-                bestPrices.lowestBuyPrice.price = data.sellorders[0].sellprice;
-                bestPrices.lowestBuyPrice.quantity = data.sellorders[0].quantity;
+                prices.buy.price = data.sellorders[0].sellprice;
+                prices.buy.quantity = data.sellorders[0].quantity;
 
-                bestPrices.highestSellPrice.price = data.buyorders[0].buyprice;
-                bestPrices.highestSellPrice.quantity = data.buyorders[0].quantity;
+                prices.sell.price = data.buyorders[0].buyprice;
+                prices.sell.quantity = data.buyorders[0].quantity;
 
-                self.latestPrices = bestPrices;
+                self.prices = prices;
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve(response);
+                deferred.resolve();
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
