@@ -72,10 +72,10 @@ module.exports = {
                 bestPrices.highestSellPrice.price = data.bids[0][0];
                 bestPrices.highestSellPrice.quantity = data.bids[0][1];
 
-                response.bestPrices = bestPrices;
+                self.latestPrices = bestPrices;
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve(response);
+                deferred.resolve();
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);

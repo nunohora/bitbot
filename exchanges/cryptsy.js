@@ -9,6 +9,8 @@ module.exports = {
     exchangeName: 'cryptsy',
 
     balances: {},
+
+    latestPrices: {},
     
     getBalance: function () {
         var deferred = new Deferred(),
@@ -80,7 +82,7 @@ module.exports = {
                 bestPrices.highestSellPrice.price = data.buyorders[0].buyprice;
                 bestPrices.highestSellPrice.quantity = data.buyorders[0].quantity;
 
-                response.bestPrices = bestPrices;
+                self.latestPrices = bestPrices;
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve(response);

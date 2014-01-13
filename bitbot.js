@@ -20,10 +20,11 @@ module.exports = {
         console.log("starting bot");
 
         all(_.each(self.exchangeMarkets, function (market) {
-                market.getBalance();
-            }, self)).then(function () {
-                self.startLookingAtPrices();
-            });
+            market.getBalance();
+        }, self))
+        .then(function () {
+            self.startLookingAtPrices();
+        });
     },
 
     startLookingAtPrices: function () {
