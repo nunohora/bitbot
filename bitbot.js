@@ -32,26 +32,37 @@ module.exports = {
     startLookingAtPrices: function () {
         var self = this,
             hasFoundArb = false,
-            interval;
+            interval,
+            canRequestPrices;
+
+        canRequestPrices = true;
 
         var getExchangesInfo = function () {
-            console.log('*** Checking Exchange Prices for ' + config.market + ' *** ');
+            if (canRequestPrices) {
+                canRequestPrices = false;
 
-            var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
-                self.exchangeMarkets['vircurex'].getExchangeInfo(),
-                self.exchangeMarkets['btce'].getExchangeInfo(),
-                self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
-                self.exchangeMarkets['bter'].getExchangeInfo())
-            .then(function () {
-                hasFoundArb = self.calculateArbOpportunity();
+                console.log('*** Checking Exchange Prices for ' + config.market + ' *** ');
 
-                //escaping the setInterval
-                if (hasFoundArb) {
-                    clearInterval(interval);
-                    self.makeTrade(hasFoundArb);
-                    console.log("INTERVAL ESCAPED!!!!");
-                }
-            });
+                var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
+                    self.exchangeMarkets['vircurex'].getExchangeInfo(),
+                    self.exchangeMarkets['btce'].getExchangeInfo(),
+                    self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
+                    self.exchangeMarkets['bter'].getExchangeInfo())
+                .then(function () {
+                    hasFoundArb = self.calculateArbOpportunity();
+
+                    //escaping the setInterval
+                    if (hasFoundArb) {
+
+                        clearInterval(interval);
+                        self.makeTrade(hasFoundArb);
+                        console.log("INTERVAL ESCAPED!!!!");
+                    }
+                    else {
+                        canRequestPrices = true;
+                    }
+                });
+            }
         };
 
         interval = setInterval(getExchangesInfo, config.interval);
@@ -131,6 +142,11 @@ module.exports = {
 
         var cost = ex1.calculateCost(amount);
         var profit = ex2.calculateProfit(amount);
+
+        console.log('cost: ', cost);
+        console.log('profit: ', profit);
+
+        console.log('final profit: ', (profit.profit - cost.cost).toFixed(8));
 
         if ((profit.profit - cost.cost).toFixed(8) > 0) {
 

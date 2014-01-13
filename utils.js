@@ -2,7 +2,7 @@ var config = require('./config');
 
 module.exports = {
 
-    calculateProfit: function (amount, price, currency, fee) {
+    calculateProfit: function (amount, price, currency, fee, decimals) {
         var profit = 0,
             potentialProfit,
             base = config.market.split("_")[0],
@@ -18,11 +18,11 @@ module.exports = {
 
         return {
             amount: amount,
-            profit: profit.toFixed(8)
+            profit: profit.toFixed(decimals)
         };
     },
 
-    calculateCost: function (amount, price, currency, fee) {
+    calculateCost: function (amount, price, currency, fee, decimals) {
         var cost = 10000,
             potentialCost,
             base = config.market.split("_")[0],
@@ -39,8 +39,8 @@ module.exports = {
         }
 
         return {
-            amount: amount.toFixed(8),
-            cost: cost.toFixed(8)
+            amount: amount.toFixed(decimals),
+            cost: cost.toFixed(decimals)
         };
     },
 };

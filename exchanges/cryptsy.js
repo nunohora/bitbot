@@ -44,9 +44,9 @@ module.exports = {
 
         // amount = 0;
 
-        client.createorder(marketId, type, amount, rate, function (data) {
-            console.log(self.exchangeName);
-            console.log(data);
+        client.createorder(marketId, type, amount, rate, function (data, error) {
+            console.log('data: ', data);
+            console.log('error: ', error);
 
             if (!data.error) {
                 deferred.resolve(data);
@@ -62,13 +62,13 @@ module.exports = {
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
 
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
 
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     },
 
     getExchangeInfo: function () {
@@ -79,22 +79,25 @@ module.exports = {
         console.log('Checking prices for ' + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
-        client.marketorders(market, function (data) {
+        client.depth(market, function (data) {
             if (!data.error) {
-
                 var prices = {
                     buy: {},
                     sell: {}
                 };
 
-                prices.buy.price = data.sellorders[0].sellprice;
-                prices.buy.quantity = data.sellorders[0].quantity;
+                prices.buy.price = _.first(data.sell)[0];
+                prices.buy.quantity = _.first(data.sell)[1];
 
-                prices.sell.price = data.buyorders[0].buyprice;
-                prices.sell.quantity = data.buyorders[0].quantity;
+                prices.sell.price = _.first(data.buy)[0];
+                prices.sell.quantity = _.first(data.buy)[1];
+
+                console.log('cryptsy');
+                console.log('buy: ', _.first(data.sell)[0]);
+                console.log('sell: ', prices.sell.price);
 
                 self.prices = prices;
-
+                                
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve();
             }

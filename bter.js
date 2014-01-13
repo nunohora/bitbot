@@ -84,8 +84,6 @@ Bter.prototype.query = function(method, params, callback) {
     'content-length': content.length,
   };
 
-  console.log(options);
-
   var req = https.request(options, function(res) {
     var data = '';
     res.setEncoding('utf8');

@@ -49,13 +49,13 @@ module.exports = {
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
 
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
 
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     },
 
     createOrder: function (market, type, rate, amount) {
@@ -126,11 +126,11 @@ module.exports = {
                     sell: {}
                 };
 
-                prices.buy.price = data.asks[0][0];
-                prices.buy.quantity = data.asks[0][1];
+                prices.buy.price = _.first(data.asks)[0];
+                prices.buy.quantity = _.first(data.asks)[1];
 
-                prices.sell.price = data.bids[0][0];
-                prices.sell.quantity = data.bids[0][1];
+                prices.sell.price = _.first(data.bids)[0];
+                prices.sell.quantity = _.first(data.bids)[1];
 
                 self.prices = prices;
 
