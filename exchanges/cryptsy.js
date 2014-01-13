@@ -44,16 +44,8 @@ module.exports = {
 
         // amount = 0;
 
-        client.createorder(marketId, type, amount, rate, function (data, error) {
-            console.log('data: ', data);
-            console.log('error: ', error);
-
-            if (!data.error) {
-                deferred.resolve(data);
-            }
-            else {
-                deferred.reject(data.error);
-            }
+        client.createorder(marketId, type, amount, rate, function (data) {
+            deferred.resolve(data);
         });
 
         return deferred.promise;
@@ -91,10 +83,6 @@ module.exports = {
 
                 prices.sell.price = _.first(data.buy)[0];
                 prices.sell.quantity = _.first(data.buy)[1];
-
-                console.log('cryptsy');
-                console.log('buy: ', _.first(data.sell)[0]);
-                console.log('sell: ', prices.sell.price);
 
                 self.prices = prices;
                                 
