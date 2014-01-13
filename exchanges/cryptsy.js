@@ -36,14 +36,18 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
-            marketId = config[this.exchangeName].marketMap[market];
+        var deferred = new Deferred(),
+            marketId = config[this.exchangeName].marketMap[market],
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         // amount = 0;
 
         client.createorder(marketId, type, amount, rate, function (data) {
+            console.log(self.exchangeName);
+            console.log(data);
+
             if (!data.error) {
                 deferred.resolve(data);
             }

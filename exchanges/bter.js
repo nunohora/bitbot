@@ -1,4 +1,6 @@
-var config = require('./../config');
+var config = require('./../config'),
+    _ = require('underscore');
+
 var Bter = require('../bter'),
     bter = new Bter(config['bter'].apiKey, config['bter'].secret),
     Deferred = require("promised-io/promise").Deferred,
@@ -20,6 +22,11 @@ module.exports = {
 
         bter.getInfo(function (err, data) {
             if (!err) {
+
+                _.each(data.available_funds, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance;
+                }, self);
+
                 deferred.resolve();
             }
             else {
@@ -31,13 +38,21 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         // amount = 0;
 
-        bter.trade(market, type, rate, amount, function (err, data) {
+        bter.trade({
+            pair: market,
+            type: type,
+            rate: rate,
+            amount: amount
+        }, function (err, data) {
+            console.log(self.exchangeName);
+            console.log(data);
             if (!err) {
                 deferred.resolve(data);
             }

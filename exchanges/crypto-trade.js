@@ -37,18 +37,21 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         // amount = 0;
 
         cryptoTrade.trade({
-            market: market,
+            pair: market,
             type: type,
             rate: rate,
             amount: amount
         }, function (err, data) {
+            console.log(self.exchangeName);
+            console.log(data);
             if (!err) {
                 deferred.resolve(data);
             }

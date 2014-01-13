@@ -73,8 +73,13 @@ module.exports = {
         // amount = 0;
 
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
+            console.log(self.exchangeName);
+            console.log(data);
+
             if (!err) {
-                when(self._releaseOrder(data)).then(function (response) {
+                when(self._releaseOrder(data.orderid)).then(function (response) {
+
+                    console.log('response: ', response);
                     deferred.resolve(response);
                 });
             }

@@ -32,7 +32,7 @@ Bter.prototype.getInfo = function(callback) {
 };
 
 Bter.prototype.trade = function(params, callback) {
-  this.query('trade', params, callback);
+  this.query('placeorder', params, callback);
 };
 
 Bter.prototype.depth = function(params, callback) {
@@ -83,6 +83,8 @@ Bter.prototype.query = function(method, params, callback) {
     'content-type': 'application/x-www-form-urlencoded',
     'content-length': content.length,
   };
+
+  console.log(options);
 
   var req = https.request(options, function(res) {
     var data = '';
