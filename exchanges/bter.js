@@ -14,6 +14,8 @@ module.exports = {
 
     prices: {},
 
+    openOrderId: null,
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -43,35 +45,38 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         bter.trade({
             pair: market.toLowerCase(),
             type: type,
             rate: rate,
             amount: amount
         }, function (err, data) {
-            console.log(self.exchangeName);
-            console.log(data);
-            if (!err) {
-                deferred.resolve(data);
+            if (!err && data.msg === 'Success') {
+
+                self.openOrderId = data.order_id;
+
+                console.log('bter order id', self.openOrderId);
+
+                deferred.resolve(true);
             }
             else {
                 deferred.reject(err);
             }
         });
+
+        return deferred.promise;
     },
 
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
 
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 4);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 6);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
 
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 4);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 6);
     },
 
     getExchangeInfo: function () {

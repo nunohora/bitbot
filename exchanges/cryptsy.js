@@ -13,6 +13,8 @@ module.exports = {
 
     prices: {},
 
+    openOrderId: null,
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -21,7 +23,7 @@ module.exports = {
 
         client.getinfo(function (data) {
             if (!data.error) {
-                _.each(data.balances_available, function (balance, index) {
+                _.each(data.return.balances_available, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 });
 
@@ -42,10 +44,15 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         client.createorder(marketId, type, amount, rate, function (data) {
-            deferred.resolve(data);
+            if (data.success === '1') {
+                self.openOrderId = +data.orderid;
+
+                deferred.resolve(true);
+            }
+            else {
+                deferred.reject();
+            }
         });
 
         return deferred.promise;
@@ -73,6 +80,10 @@ module.exports = {
         // console.log('Getting Market Prices for: ', this.exchangeName);
         client.depth(market, function (data) {
             if (!data.error) {
+                console.log('cryptsy');
+                console.log(data);
+                data = data.return;
+
                 var prices = {
                     buy: {},
                     sell: {}
@@ -85,7 +96,7 @@ module.exports = {
                 prices.sell.quantity = _.first(data.buy)[1];
 
                 self.prices = prices;
-                                
+
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve();
             }
@@ -94,6 +105,25 @@ module.exports = {
                 deferred.reject(data.error);
             }
         });
+
+        return deferred.promise;
+    },
+
+    checkOrderStatus: function () {
+        var deferred = new Deferred(),
+            market = config[this.exchangeName].marketMap[config.market];
+
+        if (this.openOrderId) {
+            client.myOrders(market, function (data) {
+                console.log('CRYPTSY ORDER DATA');
+                console.log(data);
+
+                return deferred.resolve(true);
+            });
+        }
+        else {
+            return deferred.resolve(true);
+        }
 
         return deferred.promise;
     }

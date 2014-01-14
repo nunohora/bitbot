@@ -42,8 +42,6 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         cryptoTrade.trade({
             pair: market.toLowerCase(),
             type: type,
@@ -58,6 +56,8 @@ module.exports = {
                 deferred.reject(err);
             }
         });
+
+        return deferred.promise;
     },
 
     calculateProfit: function (amount) {

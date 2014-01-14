@@ -14,6 +14,8 @@ module.exports = {
 
     prices: {},
 
+    openOrderId: null,
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -34,11 +36,10 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        // amount = 0;
 
         btceTrade.trade({
             pair: config[this.exchangeName].marketMap[market],
@@ -46,15 +47,20 @@ module.exports = {
             rate: rate,
             amount: amount
         }, function (err, data) {
-            if (!err) {
-                console.log('BTCE TRADE');
-                console.log(data);
-                deferred.resolve(data);
+            if (!err && data.success === 1) {
+
+                if (data.return.order_id !== 0) {
+                    self.openOrderId = data.return.order_id;
+                }
+
+                deferred.resolve(true);
             }
             else {
                 deferred.reject(err);
             }
         });
+
+        return deferred.promise;
     },
 
     calculateProfit: function (amount) {
@@ -101,5 +107,25 @@ module.exports = {
         });
 
         return deferred.promise;
+    },
+
+    checkOrderStatus: function () {
+        var deferred = new Deferred(),
+            market = config[this.exchangeName].marketMap[config.market];
+
+        if (this.openOrderId) {
+            btceTrade.activeOrders({pair: market}, function (data) {
+                console.log('BTCE ORDER DATA');
+                console.log(data);
+
+                return deferred.resolve(true);
+            });
+        }
+        else {
+            return deferred.resolve(true);
+        }
+
+        return deferred.promise;
     }
+
 };

@@ -70,16 +70,9 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
-            console.log(self.exchangeName);
-            console.log(data);
-
             if (!err) {
                 when(self._releaseOrder(data.orderid)).then(function (response) {
-
-                    console.log('response: ', response);
                     deferred.resolve(response);
                 });
             }

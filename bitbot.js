@@ -6,6 +6,8 @@ var config = require('./config'),
 
 module.exports = {
 
+    canLookForPrices: true,
+
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
@@ -32,14 +34,11 @@ module.exports = {
     startLookingAtPrices: function () {
         var self = this,
             hasFoundArb = false,
-            interval,
-            canRequestPrices;
-
-        canRequestPrices = true;
+            interval;
 
         var getExchangesInfo = function () {
-            if (canRequestPrices) {
-                canRequestPrices = false;
+            if (self.canLookForPrices) {
+                self.canRequestPrices = false;
 
                 console.log('*** Checking Exchange Prices for ' + config.market + ' *** ');
 
@@ -59,7 +58,7 @@ module.exports = {
                         console.log("INTERVAL ESCAPED!!!!");
                     }
                     else {
-                        canRequestPrices = true;
+                        self.canRequestPrices = true;
                     }
                 });
             }
@@ -69,16 +68,49 @@ module.exports = {
     },
 
     makeTrade: function (arb) {
-        var ex1 = arb.ex1,
+        var self = this,
+            ex1 = arb.ex1,
             ex2 = arb.ex2,
             balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()],
             balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()];
 
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!');
-            this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
-            this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
+
+            var group = all(
+                self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
+                self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
+            ).then(function (response) {
+                if (response[0] && response[1]) {
+                    self.checkOrderStatuses(ex1.name, ex2.name);
+                }
+            });
         }
+        else {
+            console.log("Oh noes! You don't have enough balance to perform this trade :(");
+        }
+    },
+
+    checkOrderStatuses: function (ex1Name, ex2Name) {
+        var self = this,
+            interval;
+
+        function checkStatuses() {
+            var group = all(this.exchangeMarkets[ex1Name].checkOrderStatus(),
+            this.exchangeMarkets[ex2Name].checkOrderStatus()
+            ).then(function (response) {
+                if (response[0] && response[1]) {
+                    console.log('Orders filled successfully!!!');
+
+                    clearInterval(interval);
+                }
+                else {
+                    console.log('Orders not filled yet... :(');
+                }
+            });
+        }
+
+        interval = setInterval(checkStatuses, config.interval);
     },
 
     checkBalances: function (ex1, ex2) {
@@ -142,11 +174,6 @@ module.exports = {
 
         var cost = ex1.calculateCost(amount);
         var profit = ex2.calculateProfit(amount);
-
-        console.log('cost: ', cost);
-        console.log('profit: ', profit);
-
-        console.log('final profit: ', (profit.profit - cost.cost).toFixed(8));
 
         if ((profit.profit - cost.cost).toFixed(8) > 0) {
 
