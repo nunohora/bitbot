@@ -20,8 +20,6 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        console.log('Getting balances for ' + this.exchangeName);
-
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
@@ -80,9 +78,11 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
+        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
         btceTrade.depth({pair: market}, function (err, data) {
+            console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
                 var prices = {
                     buy: {},
@@ -111,6 +111,7 @@ module.exports = {
 
     checkOrderStatus: function () {
         var deferred = new Deferred(),
+            self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         if (this.openOrderId) {
@@ -118,7 +119,14 @@ module.exports = {
                 console.log('BTCE ORDER DATA');
                 console.log(data);
 
-                return deferred.resolve(true);
+                if (!data) {
+                    self.openOrderId = null;
+
+                    return deferred.resolve(true);
+                }
+                else {
+                    return deferred.resolve(false);
+                }
             });
         }
         else {

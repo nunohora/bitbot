@@ -14,11 +14,11 @@ module.exports = {
 
     prices: {},
 
+    openOrderId: null,
+
     getBalance: function (type) {
         var deferred = new Deferred(),
             self = this;
-
-        console.log('Getting balances for ' + this.exchangeName);
 
         cryptoTrade.getInfo(function (err, data) {
             if (!err) {
@@ -44,7 +44,7 @@ module.exports = {
 
         cryptoTrade.trade({
             pair: market.toLowerCase(),
-            type: type,
+            type: type.charAt(0).toUpperCase() + type.slice(1),
             rate: rate,
             amount: amount
         }, function (err, data) {
@@ -77,9 +77,11 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
+        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
         cryptoTrade.depth({pair: market}, function (err, data) {
+            console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
                 var prices = {
                     buy: {},
@@ -102,6 +104,26 @@ module.exports = {
                 deferred.reject(err);
             }
         });
+
+        return deferred.promise;
+    },
+
+    checkOrderStatus: function () {
+        var deferred = new Deferred(),
+            self = this,
+            market = config[this.exchangeName].marketMap[config.market];
+
+        if (this.openOrderId) {
+            vircurex.readOrder(self.openOrderId, function (data) {
+                console.log('Vircurex ORDER DATA');
+                console.log(data);
+
+                return deferred.resolve(true);
+            });
+        }
+        else {
+            return deferred.resolve(true);
+        }
 
         return deferred.promise;
     }

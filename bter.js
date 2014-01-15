@@ -35,6 +35,10 @@ Bter.prototype.trade = function(params, callback) {
   this.query('placeorder', params, callback);
 };
 
+Bter.prototype.getOrder = function(params, callback) {
+  this.query('getorder', params, callback);
+};
+
 Bter.prototype.depth = function(params, callback) {
   if (!params) {
     params = {};

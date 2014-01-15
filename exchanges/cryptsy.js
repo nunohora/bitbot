@@ -75,13 +75,14 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
+        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
         client.depth(market, function (data) {
+            console.timeEnd(self.exchangeName + ' getPrices');
+
             if (!data.error) {
-                console.log('cryptsy');
-                console.log(data);
                 data = data.return;
 
                 var prices = {
@@ -111,14 +112,22 @@ module.exports = {
 
     checkOrderStatus: function () {
         var deferred = new Deferred(),
+            self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         if (this.openOrderId) {
-            client.myOrders(market, function (data) {
+            client.readOrder(self.openOrderId, function (data) {
                 console.log('CRYPTSY ORDER DATA');
                 console.log(data);
 
-                return deferred.resolve(true);
+                if (!data.return) {
+                    self.openOrderId = null;
+
+                    return deferred.resolve(true);
+                }
+                else {
+                    return deferred.resolve(false);
+                }
             });
         }
         else {

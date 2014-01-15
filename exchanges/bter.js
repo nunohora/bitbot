@@ -20,8 +20,6 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        console.log('Getting balances for ' + this.exchangeName);
-
         bter.getInfo(function (err, data) {
             if (!err) {
 
@@ -84,9 +82,11 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
+        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
         bter.depth({pair: market}, function (err, data) {
+            console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
                 var prices = {
                     buy: {},
@@ -109,6 +109,27 @@ module.exports = {
                 deferred.reject(err);
             }
         });
+
+        return deferred.promise;
+    },
+
+    checkOrderStatus: function () {
+        var deferred = new Deferred(),
+            self = this;
+
+        if (this.openOrderId) {
+            bter.getOrder({
+                order_id: self.openOrderId
+            }, function (data) {
+                console.log('BTER ORDER DATA');
+                console.log(data);
+
+                return deferred.resolve(true);
+            });
+        }
+        else {
+            return deferred.resolve(true);
+        }
 
         return deferred.promise;
     }

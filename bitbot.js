@@ -53,8 +53,10 @@ module.exports = {
                     //escaping the setInterval
                     if (hasFoundArb) {
 
+                        console.log('ARB', hasFoundArb);
+
                         clearInterval(interval);
-                        self.makeTrade(hasFoundArb);
+                        // self.makeTrade(hasFoundArb);
                         console.log("INTERVAL ESCAPED!!!!");
                     }
                     else {
@@ -96,8 +98,8 @@ module.exports = {
             interval;
 
         function checkStatuses() {
-            var group = all(this.exchangeMarkets[ex1Name].checkOrderStatus(),
-            this.exchangeMarkets[ex2Name].checkOrderStatus()
+            var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
+            self.exchangeMarkets[ex2Name].checkOrderStatus()
             ).then(function (response) {
                 if (response[0] && response[1]) {
                     console.log('Orders filled successfully!!!');
