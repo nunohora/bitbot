@@ -52,12 +52,8 @@ module.exports = {
 
                     //escaping the setInterval
                     if (hasFoundArb) {
-
-                        console.log('ARB', hasFoundArb);
-
                         clearInterval(interval);
                         self.makeTrade(hasFoundArb);
-                        console.log("INTERVAL ESCAPED!!!!");
                     }
                     else {
                         self.canRequestPrices = true;
@@ -101,6 +97,8 @@ module.exports = {
             var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
             self.exchangeMarkets[ex2Name].checkOrderStatus()
             ).then(function (response) {
+                console.log('check status response');
+                console.log(response);
                 if (response[0] && response[1]) {
                     console.log('Orders filled successfully!!!');
 

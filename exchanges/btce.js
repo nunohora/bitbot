@@ -113,24 +113,19 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        if (this.openOrderId) {
-            btceTrade.activeOrders({pair: market}, function (data) {
-                console.log('BTCE ORDER DATA');
-                console.log(data);
+        btceTrade.activeOrders({pair: market}, function (data) {
+            console.log('BTCE ORDER DATA');
+            console.log(data);
 
-                if (!data) {
-                    self.openOrderId = null;
+            if (!data) {
+                self.openOrderId = null;
 
-                    return deferred.resolve(true);
-                }
-                else {
-                    return deferred.resolve(false);
-                }
-            });
-        }
-        else {
-            return deferred.resolve(true);
-        }
+                return deferred.resolve(true);
+            }
+            else {
+                return deferred.resolve(false);
+            }
+        });
 
         return deferred.promise;
     }

@@ -30,7 +30,7 @@ module.exports = {
             }
             else {
                 deferred.reject(err);
-
+            }
         });
 
         return deferred.promise;
@@ -114,7 +114,7 @@ module.exports = {
 
         if (this.openOrderId) {
             vircurex.readOrder(self.openOrderId, function (data) {
-                console.log('Vircurex ORDER DATA');
+                console.log('CryptoTrade ORDER DATA');
                 console.log(data);
 
                 return deferred.resolve(true);

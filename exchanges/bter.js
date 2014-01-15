@@ -130,19 +130,22 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        if (this.openOrderId) {
-            bter.getOrder({
-                order_id: self.openOrderId
-            }, function (data) {
-                console.log('BTER ORDER DATA');
-                console.log(data);
+        bter.getOrder({
+            order_id: self.openOrderId.toString()
+        }, function (err, data) {
+            console.log('BTER ORDER DATA');
+            console.log(data);
+
+            if (!data.result) {
+                console.log('YAY!');
+                self.openOrderId = null;
 
                 return deferred.resolve(true);
-            });
-        }
-        else {
-            return deferred.resolve(true);
-        }
+            }
+            else {
+                return deferred.resolve(false);
+            }
+        });
 
         return deferred.promise;
     }

@@ -95,6 +95,13 @@ Bter.prototype.query = function(method, params, callback) {
       data+= chunk;
     });
     res.on('end', function() {
+      if (data.indexOf('Oops') !== -1) {
+        console.log('%%%%%');
+        console.log('Bter response error');
+        console.log('%%%%%');
+
+        data = '{}';
+      }
       callback(false, JSON.parse(data));
     });
   });
