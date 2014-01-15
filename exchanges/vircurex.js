@@ -110,6 +110,11 @@ module.exports = {
             alt,
             self = this;
 
+        this.prices = {
+            buy: {},
+            sell : {}
+        };
+
         console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
@@ -120,18 +125,12 @@ module.exports = {
         vircurex.getOrders(base, alt, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
-                var prices = {
-                    buy: {},
-                    sell: {}
-                };
 
-                prices.buy.price = _.first(data.asks)[0];
-                prices.buy.quantity = _.first(data.asks)[1];
+                self.prices.buy.price = _.first(data.asks)[0];
+                self.prices.buy.quantity = _.first(data.asks)[1];
 
-                prices.sell.price = _.first(data.bids)[0];
-                prices.sell.quantity = _.first(data.bids)[1];
-
-                self.prices = prices;
+                self.prices.sell.price = _.first(data.bids)[0];
+                self.prices.sell.quantity = _.first(data.bids)[1];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve();

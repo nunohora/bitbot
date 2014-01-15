@@ -75,6 +75,11 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
+        this.prices = {
+            buy: {},
+            sell : {}
+        };
+
         console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for ' + this.exchangeName);
 
@@ -84,18 +89,11 @@ module.exports = {
 
             data = data.return[config.market.split('_')[0]];
 
-            var prices = {
-                buy: {},
-                sell: {}
-            };
+            self.prices.buy.price = _.first(data.sellorders)[0];
+            self.prices.buy.quantity = _.first(data.sellorders)[1];
 
-            prices.buy.price = _.first(data.sellorders)[0];
-            prices.buy.quantity = _.first(data.sellorders)[1];
-
-            prices.sell.price = _.first(data.buyorders)[0];
-            prices.sell.quantity = _.first(data.buyorders)[1];
-
-            self.prices = prices;
+            self.prices.sell.price = _.first(data.buyorders)[0];
+            self.prices.sell.quantity = _.first(data.buyorders)[1];
 
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             deferred.resolve();
