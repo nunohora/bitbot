@@ -101,8 +101,9 @@ module.exports = {
                 console.log(response);
                 if (response[0] && response[1]) {
                     console.log('Orders filled successfully!!!');
-
                     clearInterval(interval);
+                    
+                    self.start();
                 }
                 else {
                     console.log('Orders not filled yet... :(');

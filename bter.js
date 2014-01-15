@@ -107,6 +107,7 @@ Bter.prototype.query = function(method, params, callback) {
   });
 
   req.on('error', function(err) {
+    console.log('BTER ERROR!!');
     callback(err, null);
   });
 

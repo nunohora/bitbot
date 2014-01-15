@@ -147,7 +147,7 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        vircurex.readOrder(self.openOrderId.toString(), function (data) {
+        vircurex.readOrder(self.openOrderId, function (data) {
             console.log('Vircurex ORDER DATA');
             console.log(data);
 
