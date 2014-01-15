@@ -56,7 +56,7 @@ module.exports = {
                         console.log('ARB', hasFoundArb);
 
                         clearInterval(interval);
-                        // self.makeTrade(hasFoundArb);
+                        self.makeTrade(hasFoundArb);
                         console.log("INTERVAL ESCAPED!!!!");
                     }
                     else {

@@ -93,7 +93,7 @@ module.exports = {
         bter.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
 
-            if (!err) {
+            if (data.result) {
                 var prices = {
                     buy: {},
                     sell: {}
@@ -104,6 +104,15 @@ module.exports = {
 
                 self.prices.sell.price = _.first(data.bids)[0];
                 self.prices.sell.quantity = _.first(data.bids)[1];
+
+                //the api is a bit broken. When this price
+                //shows up change the price to an unprofitable value
+                if (self.prices.buy.price === 0.0292) {
+                    console.log('%%%');
+                    console.log('BTER BROKEN PRICE!! PLEASE IGNORE!!');
+                    console.log('%%%');
+                    self.prices.buy.price = 999999;
+                }
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
                 deferred.resolve();
