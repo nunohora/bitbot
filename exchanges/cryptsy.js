@@ -79,32 +79,26 @@ module.exports = {
         console.log('Checking prices for ' + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
-        client.depth(market, function (data) {
+        client.singleorderdata(market, function (data) {
             console.timeEnd(self.exchangeName + ' getPrices');
 
-            if (!data.error) {
-                data = data.return;
+            data = data.return[config.market.split('_')[0]];
 
-                var prices = {
-                    buy: {},
-                    sell: {}
-                };
+            var prices = {
+                buy: {},
+                sell: {}
+            };
 
-                prices.buy.price = _.first(data.sell)[0];
-                prices.buy.quantity = _.first(data.sell)[1];
+            prices.buy.price = _.first(data.sellorders)[0];
+            prices.buy.quantity = _.first(data.sellorders)[1];
 
-                prices.sell.price = _.first(data.buy)[0];
-                prices.sell.quantity = _.first(data.buy)[1];
+            prices.sell.price = _.first(data.buyorders)[0];
+            prices.sell.quantity = _.first(data.buyorders)[1];
 
-                self.prices = prices;
+            self.prices = prices;
 
-                console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve();
-            }
-            else {
-                console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(data.error);
-            }
+            console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            deferred.resolve();
         });
 
         return deferred.promise;
