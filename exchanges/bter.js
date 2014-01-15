@@ -133,10 +133,13 @@ module.exports = {
         bter.getOrder({
             order_id: self.openOrderId.toString()
         }, function (err, data) {
+
+            console.log(self.openOrderId);
+            console.log(self.openOrderId.toString());
             console.log('BTER ORDER DATA');
             console.log(data);
 
-            if (!data.result) {
+            if (data.result === 'false') {
                 console.log('YAY!');
                 self.openOrderId = null;
 

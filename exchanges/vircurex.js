@@ -121,7 +121,6 @@ module.exports = {
         base = market.split("_")[0];
         alt = market.split("_")[1];
 
-        // console.log('Getting Market Prices for: ', this.exchangeName);
         vircurex.getOrders(base, alt, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
@@ -148,17 +147,12 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        if (this.openOrderId) {
-            vircurex.readOrder(self.openOrderId.toString(), function (data) {
-                console.log('Vircurex ORDER DATA');
-                console.log(data);
+        vircurex.readOrder(self.openOrderId.toString(), function (data) {
+            console.log('Vircurex ORDER DATA');
+            console.log(data);
 
-                return deferred.resolve(true);
-            });
-        }
-        else {
             return deferred.resolve(true);
-        }
+        });
 
         return deferred.promise;
     }
