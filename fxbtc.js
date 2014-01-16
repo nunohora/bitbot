@@ -4,17 +4,17 @@ var crypto = require('crypto');
 var querystring = require('querystring');
 var util = require('util');
 
-module.exports = Bter;
+module.exports = FxBTC;
 
-function Bter(apiKey, secret) {
-  this.apiKey = apiKey;
-  this.secret = secret;
-  this.urlGet = 'https://bter.com/api/1/';
-  this.urlPost = 'https://bter.com/api/1/private';
+function FxBTC(username, password) {
+  this.username = username;
+  this.password = password;
+  this.urlGet = 'https://data.fxbtc.com/api';
+  this.urlPost = 'https://trade.fxbtc.com/api';
   this.nonce = this.getTimestamp(Date.now());
 }
 
-Bter.prototype.getTimestamp = function(time) {
+FxBTC.prototype.getTimestamp = function(time) {
   if (util.isDate(time)) {
     return Math.round(time.getTime() / 1000);
   }
@@ -27,39 +27,28 @@ Bter.prototype.getTimestamp = function(time) {
   return 0;
 };
 
-Bter.prototype.getInfo = function(callback) {
-  this.query('getfunds', null, callback);
+FxBTC.prototype.getInfo = function(callback) {
+  this.query('getinfo', null, callback);
 };
 
-Bter.prototype.trade = function(params, callback) {
-  this.query('placeorder', params, callback);
+FxBTC.prototype.trade = function(params, callback) {
+  this.query('trade', params, callback);
 };
 
-Bter.prototype.getOrder = function(params, callback) {
-  this.query('getorder', params, callback);
-};
-
-Bter.prototype.getOrderList = function(callback) {
-  this.query('orderlist', null, callback);
-};
-
-Bter.prototype.depth = function(params, callback) {
+FxBTC.prototype.depth = function(params, callback) {
   if (!params) {
     params = {};
   }
 
-  if (!params.pair) {
-    params.pair = 'btc_usd';
-  }
-
-  var url = this.urlGet+'depth/'+params.pair;
+  var url = this.urlGet + '?op=query_depth&symbol=' + params.pair;
 
   this.getHTTPS(url, callback);
 };
 
-Bter.prototype.query = function(method, params, callback) {
+FxBTC.prototype.query = function(method, params, callback) {
   var _this = this;
   var content = {
+    'method': method,
     'nonce': ++this.nonce,
   };
 
@@ -86,8 +75,8 @@ Bter.prototype.query = function(method, params, callback) {
 
   options.method = 'POST';
   options.headers = {
-    'Key': this.apiKey,
-    'Sign': sign,
+    'AuthKey': this.apiKey,
+    'AuthSign': sign,
     'content-type': 'application/x-www-form-urlencoded',
     'content-length': content.length,
   };
@@ -99,19 +88,11 @@ Bter.prototype.query = function(method, params, callback) {
       data+= chunk;
     });
     res.on('end', function() {
-      if (data.indexOf('Oops') !== -1 || data.charAt(0) === '<') {
-        console.log('%%%%%');
-        console.log('Bter response error');
-        console.log('%%%%%');
-
-        data = '{}';
-      }
       callback(false, JSON.parse(data));
     });
   });
 
   req.on('error', function(err) {
-    console.log('BTER ERROR!!');
     callback(err, null);
   });
 
@@ -119,7 +100,7 @@ Bter.prototype.query = function(method, params, callback) {
   req.end();
 };
 
-Bter.prototype.ticker = function(params, callback) {
+FxBTC.prototype.ticker = function(params, callback) {
   if (!params) {
     params = {};
   }
@@ -133,8 +114,7 @@ Bter.prototype.ticker = function(params, callback) {
   this.getHTTPS(url, callback);
 };
 
-Bter.prototype.getHTTPS = function(getUrl, callback) {
-
+FxBTC.prototype.getHTTPS = function(getUrl, callback) {
   var options = url.parse(getUrl);
   options.method = 'GET';
   var req = https.request(options, function(res) {
@@ -145,10 +125,6 @@ Bter.prototype.getHTTPS = function(getUrl, callback) {
     });
     res.on('end', function() {
       if (data.charAt(0) === '<') {
-        console.log('%%%%%');
-        console.log('Bter response error');
-        console.log('%%%%%');
-
         data = '{}';
       }
       callback(false, JSON.parse(data));
@@ -156,7 +132,7 @@ Bter.prototype.getHTTPS = function(getUrl, callback) {
   });
 
   req.on('error', function(err) {
-    callback(false, JSON.parse('{}'));
+    callback(err, null);
   });
 
   req.end();

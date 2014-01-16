@@ -14,8 +14,6 @@ module.exports = {
 
     prices: {},
 
-    openOrderId: null,
-
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -50,11 +48,6 @@ module.exports = {
             amount: amount
         }, function (err, data) {
             if (!err && data.msg === 'Success') {
-
-                self.openOrderId = data.order_id;
-
-                console.log('bter order id', self.openOrderId);
-
                 deferred.resolve(true);
             }
             else {
@@ -94,11 +87,6 @@ module.exports = {
             console.timeEnd(self.exchangeName + ' getPrices');
 
             if (data.result) {
-                var prices = {
-                    buy: {},
-                    sell: {}
-                };
-
                 self.prices.buy.price = _.last(data.asks)[0];
                 self.prices.buy.quantity = _.last(data.asks)[1];
 
@@ -119,7 +107,7 @@ module.exports = {
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(err);
+                deferred.resolve();
             }
         });
 
@@ -130,24 +118,10 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        bter.getOrder({
-            order_id: self.openOrderId.toString()
-        }, function (err, data) {
+        bter.getOrderList(function (err, data) {
+            console.log('BTER ORDER DATA: ', data);
 
-            console.log(self.openOrderId);
-            console.log(self.openOrderId.toString());
-            console.log('BTER ORDER DATA');
-            console.log(data);
-
-            if (data.result === 'false') {
-                console.log('YAY!');
-                self.openOrderId = null;
-
-                return deferred.resolve(true);
-            }
-            else {
-                return deferred.resolve(false);
-            }
+            return !_.isEmpty(data) && _.isEmpty(data.orders) ? deferred.resolve(true) : deferred.resolve(false);
         });
 
         return deferred.promise;

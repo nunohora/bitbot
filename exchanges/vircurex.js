@@ -24,13 +24,9 @@ module.exports = {
 
     prices: {},
 
-    openOrderId: null,
-
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
-
-        console.log('Getting balances for ' + this.exchangeName);
 
         vircurex.getBalances(function (err, data) {
             if (!err) {
@@ -77,8 +73,6 @@ module.exports = {
                 when(self._releaseOrder(data.orderid)).then(function (response) {
                     console.log('VIRCUREX RELEASE ORDER RESPONSE', response);
 
-                    self.openOrderId = response.orderid;
-                    
                     deferred.resolve(response);
                 });
             }
@@ -149,7 +143,7 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        vircurex.readOrder(self.openOrderId, function (data) {
+        vircurex.readOrders(function (data) {
             console.log('Vircurex ORDER DATA');
             console.log(data);
 

@@ -14,8 +14,6 @@ module.exports = {
 
     prices: {},
 
-    openOrderId: null,
-
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -46,11 +44,6 @@ module.exports = {
             amount: amount
         }, function (err, data) {
             if (!err && data.success === 1) {
-
-                if (data.return.order_id !== 0) {
-                    self.openOrderId = data.return.order_id;
-                }
-
                 deferred.resolve(true);
             }
             else {
@@ -114,17 +107,9 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market];
 
         btceTrade.activeOrders({pair: market}, function (data) {
-            console.log('BTCE ORDER DATA');
-            console.log(data);
+            console.log('BTCE ORDER DATA: ', data);
 
-            if (!data) {
-                self.openOrderId = null;
-
-                return deferred.resolve(true);
-            }
-            else {
-                return deferred.resolve(false);
-            }
+            return data ? deferred.resolve(false) : deferred.resolve(true);
         });
 
         return deferred.promise;

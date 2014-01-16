@@ -19,8 +19,6 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        console.log('Getting balances for ' + this.exchangeName);
-
         client.getinfo(function (data) {
             if (!data.error) {
                 _.each(data.return.balances_available, function (balance, index) {
@@ -87,15 +85,18 @@ module.exports = {
         client.singleorderdata(market, function (data) {
             console.timeEnd(self.exchangeName + ' getPrices');
 
-            data = data.return[config.market.split('_')[0]];
+            if (data.return) {
+                data = data.return[config.market.split('_')[0]];
 
-            self.prices.buy.price = _.first(data.sellorders)[0];
-            self.prices.buy.quantity = _.first(data.sellorders)[1];
+                self.prices.buy.price = _.first(data.sellorders)[0];
+                self.prices.buy.quantity = _.first(data.sellorders)[1];
 
-            self.prices.sell.price = _.first(data.buyorders)[0];
-            self.prices.sell.quantity = _.first(data.buyorders)[1];
+                self.prices.sell.price = _.first(data.buyorders)[0];
+                self.prices.sell.quantity = _.first(data.buyorders)[1];
 
-            console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+                console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            }
+
             deferred.resolve();
         });
 

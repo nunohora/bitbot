@@ -87,7 +87,8 @@ module.exports = {
 
         cryptoTrade.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
-            if (!err) {
+
+            if (!err && data) {
 
                 self.prices.buy.price = _.first(data.asks)[0];
                 self.prices.buy.quantity = _.first(data.asks)[1];
@@ -96,12 +97,9 @@ module.exports = {
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve();
             }
-            else {
-                console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(err);
-            }
+
+            deferred.resolve();
         });
 
         return deferred.promise;

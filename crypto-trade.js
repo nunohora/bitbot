@@ -129,6 +129,9 @@ CryptoTrade.prototype.getHTTPS = function(getUrl, callback) {
       data+= chunk;
     });
     res.on('end', function() {
+      if (data.charAt(0) === '<') {
+        data = '{}';
+      }
       callback(false, JSON.parse(data));
     });
   });
