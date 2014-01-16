@@ -77,6 +77,8 @@ module.exports = {
                 when(self._releaseOrder(data.orderid)).then(function (response) {
                     console.log('VIRCUREX RELEASE ORDER RESPONSE', response);
 
+                    self.openOrderId = response.orderid;
+                    
                     deferred.resolve(response);
                 });
             }
@@ -151,7 +153,7 @@ module.exports = {
             console.log('Vircurex ORDER DATA');
             console.log(data);
 
-            return deferred.resolve(true);
+            return data.code === 6 ? deferred.resolve(true) : deferred.resolve(false);
         });
 
         return deferred.promise;

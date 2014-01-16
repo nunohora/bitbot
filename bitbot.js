@@ -97,8 +97,8 @@ module.exports = {
             var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
             self.exchangeMarkets[ex2Name].checkOrderStatus()
             ).then(function (response) {
-                console.log('check status response');
-                console.log(response);
+                console.log('check status response: ', response);
+
                 if (response[0] && response[1]) {
                     console.log('Orders filled successfully!!!');
                     clearInterval(interval);
