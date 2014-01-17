@@ -7,11 +7,22 @@ var util = require('util');
 module.exports = FxBTC;
 
 function FxBTC(username, password) {
+  self = this;
+
   this.username = username;
   this.password = password;
   this.urlGet = 'https://data.fxbtc.com/api';
   this.urlPost = 'https://trade.fxbtc.com/api';
   this.nonce = this.getTimestamp(Date.now());
+
+  this._login({
+    username: username,
+    password: password
+  }, function (err, response) {
+    if (!err) {
+      self.token = response.token;
+    }
+  });
 }
 
 FxBTC.prototype.getTimestamp = function(time) {
@@ -28,10 +39,17 @@ FxBTC.prototype.getTimestamp = function(time) {
 };
 
 FxBTC.prototype.getInfo = function(callback) {
-  this.query('getinfo', null, callback);
+  this.query('get_info', null, callback);
 };
 
-FxBTC.prototype.trade = function(params, callback) {
+FxBTC.prototype._login = function(params, callback) {
+  var url = this.urlPost + '?op=get_token&username=' + params.username + '&password=' + params.password;
+
+  console.log(url);
+  this.getHTTPS(url, callback);
+};
+
+FxBTC.prototype._trade = function(params, callback) {
   this.query('trade', params, callback);
 };
 
@@ -103,10 +121,6 @@ FxBTC.prototype.query = function(method, params, callback) {
 FxBTC.prototype.ticker = function(params, callback) {
   if (!params) {
     params = {};
-  }
-
-  if (!params.pair) {
-    params.pair = 'btc_usd';
   }
 
   var url = this.urlGet + 'ticker/' + params.pair;

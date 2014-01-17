@@ -99,7 +99,9 @@ module.exports = {
             });
         }
         else {
-            console.log("Oh noes! You don't have enough balance to perform this trade :(");
+            console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(");
+            self.canLookForPrices = true;
+            self.startLookingAtPrices();
         }
     },
 
@@ -171,7 +173,6 @@ module.exports = {
 
     calculateAfterFees: function (ex1, ex2) {
         var amount = config.tradeAmount,
-            maxAmount = amount,
             amountToBuy,
             amountToSell,
             cryptsyFee;

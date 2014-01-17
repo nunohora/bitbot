@@ -51,7 +51,7 @@ module.exports = {
                 deferred.resolve(true);
             }
             else {
-                deferred.reject(err);
+                deferred.resolve(false);
             }
         });
 

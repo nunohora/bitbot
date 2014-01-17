@@ -49,7 +49,9 @@ module.exports = {
             amount: amount
         }, function (err, data) {
             if (!err) {
-                console.log('CryptoTrade Order Response: ', data);
+                console.log('CryptoTrade create order response: ', data);
+                self.openOrderId = data.data;
+
                 deferred.resolve(data);
             }
             else {
@@ -110,17 +112,18 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        if (this.openOrderId) {
-            vircurex.readOrder(self.openOrderId, function (data) {
+            cryptoTrade.orderInfo({orderid: self.openOrderId}, function (data) {
                 console.log('CryptoTrade ORDER DATA');
                 console.log(data);
 
-                return deferred.resolve(true);
+                if (!_.isEmpty(data)) {
+                    console.log(_.first(data.data).remaining_amount === '0');
+                    console.log(_.first(data.data)['remaining_amount'] === '0');
+                    console.log(_.first(data.data));
+                }
+
+                return !_.isEmpty(data) && _.first(data.data)['remaining_amount'] === '0' ? deferred.resolve(true) : deferred.resolve(false);
             });
-        }
-        else {
-            return deferred.resolve(true);
-        }
 
         return deferred.promise;
     }

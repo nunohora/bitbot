@@ -35,6 +35,14 @@ CryptoTrade.prototype.trade = function(params, callback) {
   this.query('trade', params, callback);
 };
 
+CryptoTrade.prototype.orderInfo = function(params, callback) {
+  this.query('orderinfo', params, callback);
+};
+
+CryptoTrade.prototype.ordersHistory = function(params, callback) {
+  this.query('ordershistory', params, callback);
+};
+
 CryptoTrade.prototype.depth = function(params, callback) {
   if (!params) {
     params = {};
@@ -92,6 +100,10 @@ CryptoTrade.prototype.query = function(method, params, callback) {
       data+= chunk;
     });
     res.on('end', function() {
+      console.log('CryptoTrade Data: ', data);
+      if (data.indexOf('<') !== -1) {
+        data = '{}';
+      }
       callback(false, JSON.parse(data));
     });
   });
