@@ -102,14 +102,16 @@ CryptoTrade.prototype.query = function(method, params, callback) {
     res.on('end', function() {
       console.log('CryptoTrade Data: ', data);
       if (data.indexOf('<') !== -1) {
-        data = '{}';
+        callback(true, null);
       }
-      callback(false, JSON.parse(data));
+      else {
+        callback(false, JSON.parse(data));
+      }
     });
   });
 
   req.on('error', function(err) {
-    callback(err, null);
+    callback(true, null);
   });
 
   req.write(content);
@@ -141,15 +143,17 @@ CryptoTrade.prototype.getHTTPS = function(getUrl, callback) {
       data+= chunk;
     });
     res.on('end', function() {
-      if (data.charAt(0) === '<') {
-        data = '{}';
+      if (data.indexOf('<') !== -1) {
+        callback(true, null);
       }
-      callback(false, JSON.parse(data));
+      else {
+        callback(false, JSON.parse(data));
+      }
     });
   });
 
   req.on('error', function(err) {
-    callback(err, null);
+    callback(true, null);
   });
 
   req.end();

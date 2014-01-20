@@ -19,8 +19,8 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
-        client.getinfo(function (data) {
-            if (!data.error) {
+        client.getinfo(function (err, data) {
+            if (!err) {
                 _.each(data.return.balances_available, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 });
@@ -42,8 +42,8 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        client.createorder(marketId, type, amount, rate, function (data) {
-            if (data.success === '1') {
+        client.createorder(marketId, type, amount, rate, function (err, data) {
+            if (!err && data.success === '1') {
                 self.openOrderId = +data.orderid;
 
                 deferred.resolve(true);
@@ -82,10 +82,10 @@ module.exports = {
         console.log('Checking prices for ' + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
-        client.singleorderdata(market, function (data) {
+        client.singleorderdata(market, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
 
-            if (data.return) {
+            if (!err && data.return) {
                 data = data.return[config.market.split('_')[0]];
 
                 self.prices.buy.price = _.first(data.sellorders)[0];
@@ -108,24 +108,19 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        if (this.openOrderId) {
-            client.readOrder(self.openOrderId, function (data) {
-                console.log('CRYPTSY ORDER DATA');
-                console.log(data);
+        client.myorders(market, function (err, data) {
+            console.log('CRYPTSY ORDER DATA');
+            console.log(data);
 
-                if (!data.return) {
-                    self.openOrderId = null;
+            if (!err && !data.return) {
+                self.openOrderId = null;
 
-                    return deferred.resolve(true);
-                }
-                else {
-                    return deferred.resolve(false);
-                }
-            });
-        }
-        else {
-            return deferred.resolve(true);
-        }
+                deferred.resolve(false);
+            }
+            else {
+                deferred.resolve(false);
+            }
+        });
 
         return deferred.promise;
     }

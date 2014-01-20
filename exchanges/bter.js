@@ -121,7 +121,12 @@ module.exports = {
         bter.getOrderList(function (err, data) {
             console.log('BTER ORDER DATA: ', data);
 
-            return !_.isEmpty(data) && _.isEmpty(data.orders) ? deferred.resolve(true) : deferred.resolve(false);
+            if (!err && _.isEmpty(data.orders)) {
+                deferred.resolve(true);
+            }
+            else {
+                deferred.resolve(false);
+            }
         });
 
         return deferred.promise;

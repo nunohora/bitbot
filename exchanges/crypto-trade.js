@@ -50,7 +50,7 @@ module.exports = {
         }, function (err, data) {
             if (!err) {
                 console.log('CryptoTrade create order response: ', data);
-                self.openOrderId = data.data;
+                self.openOrderId = data.data.order_id;
 
                 deferred.resolve(data);
             }
@@ -112,17 +112,16 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-            cryptoTrade.orderInfo({orderid: self.openOrderId}, function (data) {
+            cryptoTrade.orderInfo({orderid: self.openOrderId}, function (err, data) {
                 console.log('CryptoTrade ORDER DATA');
                 console.log(data);
 
-                if (!_.isEmpty(data)) {
-                    console.log(_.first(data.data).remaining_amount === '0');
-                    console.log(_.first(data.data)['remaining_amount'] === '0');
-                    console.log(_.first(data.data));
+                if (!err && (data.error === 'orderid must be a positive integer' || data.data.remaining === '0')) {
+                    deferred.resolve(true);
                 }
-
-                return !_.isEmpty(data) && _.first(data.data)['remaining_amount'] === '0' ? deferred.resolve(true) : deferred.resolve(false);
+                else {
+                    deferred.resolve(false);
+                }
             });
 
         return deferred.promise;

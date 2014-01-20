@@ -68,6 +68,8 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
+        this.orderType = type;
+
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
             console.log('Vircurex create order data: ');
             console.log('error: ', err);
@@ -76,6 +78,8 @@ module.exports = {
             if (!err) {
                 when(self._releaseOrder(data.orderid)).then(function (response) {
                     console.log('VIRCUREX RELEASE ORDER RESPONSE', response);
+
+                    self.openOrderId = response.orderid;
 
                     deferred.resolve(response);
                 });
@@ -147,14 +151,18 @@ module.exports = {
     },
 
     checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this;
+        var deferred = new Deferred();
 
-        vircurex.readOrders(function (data) {
+        vircurex.readOrders(1, function (err, data) {
             console.log('Vircurex ORDER DATA');
             console.log(data);
 
-            return data.code === 6 ? deferred.resolve(true) : deferred.resolve(false);
+            if (!err && data.numberorders === 0) {
+                deferred.resolve(true);
+            }
+            else {
+                deferred.resolve(false);
+            }
         });
 
         return deferred.promise;

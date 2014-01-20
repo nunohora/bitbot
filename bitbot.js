@@ -8,11 +8,13 @@ module.exports = {
 
     canLookForPrices: true,
 
+    firstTime: true,
+
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        'fxbtc': require('./exchanges/fxbtc'),
+        // 'fxbtc': require('./exchanges/fxbtc'),
         'crypto-trade': require('./exchanges/crypto-trade'),
         'bter': require('./exchanges/bter')
     },
@@ -25,10 +27,16 @@ module.exports = {
         all(self.exchangeMarkets['cryptsy'].getBalance(),
             self.exchangeMarkets['vircurex'].getBalance(),
             self.exchangeMarkets['btce'].getBalance(),
-            self.exchangeMarkets['fxbtc'].getBalance(),
+            // self.exchangeMarkets['fxbtc'].getBalance(),
             self.exchangeMarkets['crypto-trade'].getBalance(),
             self.exchangeMarkets['bter'].getBalance())
         .then(function () {
+            console.log('Total balance of exchanges: ', self.getTotalBalanceInExchanges());
+
+            // if (!self.firstTime) {
+
+            // }
+
             self.startLookingAtPrices();
         });
     },
@@ -47,7 +55,7 @@ module.exports = {
                 var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
                     self.exchangeMarkets['vircurex'].getExchangeInfo(),
                     self.exchangeMarkets['btce'].getExchangeInfo(),
-                    self.exchangeMarkets['fxbtc'].getExchangeInfo(),
+                    // self.exchangeMarkets['fxbtc'].getExchangeInfo(),
                     self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
                     self.exchangeMarkets['bter'].getExchangeInfo())
                 .then(function () {
@@ -56,7 +64,7 @@ module.exports = {
                     //escaping the setInterval
                     if (hasFoundArb) {
                         clearInterval(interval);
-                        // self.makeTrade(hasFoundArb);
+                        self.makeTrade(hasFoundArb);
                     }
                     else {
                         console.log('hasnt found arb');
@@ -80,12 +88,11 @@ module.exports = {
         console.log('Balance to buy: ', balanceToBuy);
         console.log('Required balance to buy: ', ex1.buy);
         console.log('Enough balance to buy?: ', balanceToBuy > (ex1.buy * ex1.amount));
-
         console.log('Balance to sell: ', balanceToSell);
         console.log('Required balance to sell: ', ex2.amount);
         console.log('Enough balance to sell?: ', balanceToSell > ex2.amount);
-
         console.log('&&&&&&&&&&&&&&&');
+
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!');
 
@@ -205,5 +212,25 @@ module.exports = {
         else {
             return false;
         }
+    },
+
+    getTotalBalanceInExchanges: function () {
+        var totalBalances = {};
+
+        _.each(this.exchangeMarkets, function (exchange) {
+            var exchangeBalance = exchange.balances;
+
+            _.each(exchangeBalance, function (currency, index) {
+                if (totalBalances[index]) {
+                    totalBalances[index] += currency;
+                }
+
+                else {
+                    totalBalances[index] = currency;
+                }
+            }, this);
+        }, this);
+
+        return totalBalances;
     }
 };

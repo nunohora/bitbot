@@ -47,7 +47,7 @@ module.exports = {
                 deferred.resolve(true);
             }
             else {
-                deferred.reject(err);
+                deferred.resolve(false);
             }
         });
 
@@ -94,7 +94,7 @@ module.exports = {
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(err);
+                deferred.resolve();
             }
         });
 
@@ -106,10 +106,15 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        btceTrade.activeOrders({pair: market}, function (data) {
+        btceTrade.activeOrders({pair: market}, function (err, data) {
             console.log('BTCE ORDER DATA: ', data);
 
-            return data ? deferred.resolve(false) : deferred.resolve(true);
+            if (!err && data.error === 'no orders') {
+                deferred.resolve(true);
+            }
+            else {
+                deferred.resolve(false);
+            }
         });
 
         return deferred.promise;

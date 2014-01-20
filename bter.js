@@ -99,20 +99,23 @@ Bter.prototype.query = function(method, params, callback) {
       data+= chunk;
     });
     res.on('end', function() {
-      if (data.indexOf('Oops') !== -1 || data.charAt(0) === '<') {
+      if (data.indexOf('Oops') !== -1 || data.indexOf('<') !== -1) {
+        console.log(data);
         console.log('%%%%%');
         console.log('Bter response error');
         console.log('%%%%%');
 
-        data = '{}';
+        callback(true, null);
       }
-      callback(false, JSON.parse(data));
+      else {
+        callback(false, JSON.parse(data));
+      }
     });
   });
 
   req.on('error', function(err) {
     console.log('BTER ERROR!!');
-    callback(err, null);
+    callback(true, null);
   });
 
   req.write(content);
@@ -122,10 +125,6 @@ Bter.prototype.query = function(method, params, callback) {
 Bter.prototype.ticker = function(params, callback) {
   if (!params) {
     params = {};
-  }
-
-  if (!params.pair) {
-    params.pair = 'btc_usd';
   }
 
   var url = this.urlGet + 'ticker/' + params.pair;
@@ -149,14 +148,16 @@ Bter.prototype.getHTTPS = function(getUrl, callback) {
         console.log('Bter response error');
         console.log('%%%%%');
 
-        data = '{}';
+        callback(true, null);
       }
-      callback(false, JSON.parse(data));
+      else {
+        callback(false, JSON.parse(data));
+      }
     });
   });
 
   req.on('error', function(err) {
-    callback(false, JSON.parse('{}'));
+    callback(true, null);
   });
 
   req.end();
