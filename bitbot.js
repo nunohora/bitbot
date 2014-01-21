@@ -15,8 +15,8 @@ module.exports = {
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'fxbtc': require('./exchanges/fxbtc'),
-        'crypto-trade': require('./exchanges/crypto-trade'),
-        'bter': require('./exchanges/bter')
+        'crypto-trade': require('./exchanges/crypto-trade')
+        // 'bter': require('./exchanges/bter')
     },
 
 	start: function () {
@@ -28,14 +28,10 @@ module.exports = {
             self.exchangeMarkets['vircurex'].getBalance(),
             self.exchangeMarkets['btce'].getBalance(),
             // self.exchangeMarkets['fxbtc'].getBalance(),
-            self.exchangeMarkets['crypto-trade'].getBalance(),
-            self.exchangeMarkets['bter'].getBalance())
+            self.exchangeMarkets['crypto-trade'].getBalance())
+            // self.exchangeMarkets['bter'].getBalance())
         .then(function () {
             console.log('Total balance of exchanges: ', self.getTotalBalanceInExchanges());
-
-            // if (!self.firstTime) {
-
-            // }
 
             self.startLookingAtPrices();
         });
@@ -56,8 +52,8 @@ module.exports = {
                     self.exchangeMarkets['vircurex'].getExchangeInfo(),
                     self.exchangeMarkets['btce'].getExchangeInfo(),
                     // self.exchangeMarkets['fxbtc'].getExchangeInfo(),
-                    self.exchangeMarkets['crypto-trade'].getExchangeInfo(),
-                    self.exchangeMarkets['bter'].getExchangeInfo())
+                    self.exchangeMarkets['crypto-trade'].getExchangeInfo())
+                    // self.exchangeMarkets['bter'].getExchangeInfo())
                 .then(function () {
                     hasFoundArb = self.calculateArbOpportunity();
 

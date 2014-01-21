@@ -139,11 +139,11 @@ module.exports = {
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve();
+                deferred.resolve(true);
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.reject(err);
+                deferred.resolve(false);
             }
         });
 

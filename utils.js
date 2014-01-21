@@ -10,6 +10,7 @@ module.exports = {
 
         if (currency === base) {
             profit = (amount * (1 - fee) * price);
+            amount = (amount / (1 - fee));
         }
         else if (currency === alt) {
             potentialProfit = amount * price;
@@ -17,7 +18,7 @@ module.exports = {
         }
 
         return {
-            amount: amount,
+            amount: amount.toFixed(8),
             profit: profit.toFixed(decimals)
         };
     },
@@ -29,7 +30,7 @@ module.exports = {
             alt = config.market.split("_")[1];
 
         if (currency === base) {
-            amount = amount + (amount * fee);
+            amount = (amount / (1 - fee));
             cost = amount * price;
         }
 

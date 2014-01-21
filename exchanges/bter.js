@@ -86,7 +86,7 @@ module.exports = {
         bter.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
 
-            if (data.result) {
+            if (!err && data.result) {
                 self.prices.buy.price = _.last(data.asks)[0];
                 self.prices.buy.quantity = _.last(data.asks)[1];
 
