@@ -93,6 +93,7 @@ Bter.prototype.query = function(method, params, callback) {
   };
 
   var req = https.request(options, function(res) {
+
     var data = '';
     res.setEncoding('utf8');
     res.on('data', function (chunk) {

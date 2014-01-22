@@ -1,3 +1,4 @@
+var colors = require('colors');
 var config = require('./../config');
 var _ = require('underscore');
 
@@ -15,15 +16,25 @@ module.exports = {
     prices: {},
 
     getBalance: function () {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this;
 
-        setTimeout(function () {
-            deferred.resolve();
+        fxBTC.getInfo(function (err, data) {
+            if (!err) {
+                _.each(data.info.funds.free, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance;
+                });
 
-        }, 1000);
+                deferred.resolve();
+            }
+            else {
+                deferred.reject(err);
+            }
+        });
 
         return deferred.promise;
     },
+
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
@@ -36,7 +47,7 @@ module.exports = {
         };
 
         console.time(this.exchangeName + ' getPrices');
-        console.log('Checking prices for ' + this.exchangeName);
+        console.log('Checking prices for '.yellow + this.exchangeName);
 
         fxBTC.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
@@ -59,5 +70,17 @@ module.exports = {
         });
 
         return deferred.promise;
+    },
+
+    calculateProfit: function (amount) {
+        var sellFee = config[this.exchangeName].fees[config.market].sell;
+
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
+    },
+
+    calculateCost: function (amount) {
+        var buyFee = config[this.exchangeName].fees[config.market].buy;
+
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     }
 };

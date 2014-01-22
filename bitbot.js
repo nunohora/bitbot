@@ -1,4 +1,5 @@
-var config = require('./config'),
+var colors = require('colors'),
+    config = require('./config'),
     _ = require('underscore'),
     when = require('promised-io/promise').when,
     all = require('promised-io/promise').all,
@@ -8,30 +9,30 @@ module.exports = {
 
     canLookForPrices: true,
 
-    firstTime: true,
-
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
+        // 'bter': require('./exchanges/bter'),
         // 'fxbtc': require('./exchanges/fxbtc'),
         'crypto-trade': require('./exchanges/crypto-trade')
-        // 'bter': require('./exchanges/bter')
     },
 
-	start: function () {
-        var self = this;
-
+	start: function (marketName) {
         console.log("starting bot");
+
+        var self = this;
+        
+        config.market = marketName;
 
         all(self.exchangeMarkets['cryptsy'].getBalance(),
             self.exchangeMarkets['vircurex'].getBalance(),
             self.exchangeMarkets['btce'].getBalance(),
+            // self.exchangeMarkets['bter'].getBalance(),
             // self.exchangeMarkets['fxbtc'].getBalance(),
-            self.exchangeMarkets['crypto-trade'].getBalance())
-            // self.exchangeMarkets['bter'].getBalance())
-        .then(function () {
-            console.log('Total balance of exchanges: ', self.getTotalBalanceInExchanges());
+            self.exchangeMarkets['crypto-trade'].getBalance()
+        ).then(function () {
+            console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
 
             self.startLookingAtPrices();
         });
@@ -46,15 +47,16 @@ module.exports = {
             if (self.canLookForPrices) {
                 self.canLookForPrices = false;
 
-                console.log('*** Checking Exchange Prices for ' + config.market + ' *** ');
+                console.log('*** Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
 
-                var group = all(self.exchangeMarkets['cryptsy'].getExchangeInfo(),
+                var group = all(
+                    self.exchangeMarkets['cryptsy'].getExchangeInfo(),
                     self.exchangeMarkets['vircurex'].getExchangeInfo(),
                     self.exchangeMarkets['btce'].getExchangeInfo(),
+                    // self.exchangeMarkets['bter'].getExchangeInfo(),
                     // self.exchangeMarkets['fxbtc'].getExchangeInfo(),
-                    self.exchangeMarkets['crypto-trade'].getExchangeInfo())
-                    // self.exchangeMarkets['bter'].getExchangeInfo())
-                .then(function () {
+                    self.exchangeMarkets['crypto-trade'].getExchangeInfo()
+                ).then(function () {
                     hasFoundArb = self.calculateArbOpportunity();
 
                     //escaping the setInterval
@@ -63,7 +65,6 @@ module.exports = {
                         self.makeTrade(hasFoundArb);
                     }
                     else {
-                        console.log('hasnt found arb');
                         self.canLookForPrices = true;
                     }
                 });
@@ -81,13 +82,13 @@ module.exports = {
             balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()];
 
         console.log('&&&&&&&&&&&&&&&');
-        console.log('Balance to buy: ', balanceToBuy);
-        console.log('Required balance to buy: ', ex1.buy);
-        console.log('Enough balance to buy?: ', balanceToBuy > (ex1.buy * ex1.amount));
-        console.log('Balance to sell: ', balanceToSell);
-        console.log('Required balance to sell: ', ex2.amount);
-        console.log('Enough balance to sell?: ', balanceToSell > ex2.amount);
-        console.log('&&&&&&&&&&&&&&&');
+        console.log('Balance to buy: '.yellow, balanceToBuy);
+        console.log('Required balance to buy: '.yellow, ex1.buy);
+        console.log('Enough balance to buy?: '.yellow, balanceToBuy > (ex1.buy * ex1.amount));
+        console.log('Balance to sell: '.yellow, balanceToSell);
+        console.log('Required balance to sell: '.yellow, ex2.amount);
+        console.log('Enough balance to sell?: '.yellow, balanceToSell > ex2.amount);
+        console.log('&&&&&&&&&&&&&&&'.yellow);
 
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!');
@@ -124,7 +125,7 @@ module.exports = {
 
                     self.canLookForPrices = true;
 
-                    // self.start();
+                    self.start(config.market);
                 }
                 else {
                     console.log('Orders not filled yet... :(');
@@ -186,11 +187,11 @@ module.exports = {
         if ((profit.profit - cost.cost).toFixed(8) > 0) {
 
             console.log("\007");
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
-            console.log('Buy: ', cost.amount + ' ' + config.market.split("_")[0] + ' for ' + ex1.prices.buy.price + ' in ' + ex1.exchangeName);
-            console.log('Sell: ', profit.amount + ' ' + config.market.split("_")[0] + ' for ' + ex2.prices.sell.price + ' in ' + ex2.exchangeName);
-            console.log('Profit: ' + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+            console.log('Buy: '.green, cost.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.prices.buy.price + ' in '.green + ex1.exchangeName);
+            console.log('Sell: '.green, profit.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.prices.sell.price + ' in '.green + ex2.exchangeName);
+            console.log('Profit: '.green + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
+            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
 
             return {
                 ex1: {
@@ -226,6 +227,8 @@ module.exports = {
                 }
             }, this);
         }, this);
+
+        console.log('aqui2');
 
         return totalBalances;
     }

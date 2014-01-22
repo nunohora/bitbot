@@ -1,3 +1,5 @@
+var colors = require('colors');
+
 var config = require('./../config'),
     _ = require('underscore');
 
@@ -81,7 +83,7 @@ module.exports = {
         };
 
         console.time(this.exchangeName + ' getPrices');
-        console.log('Checking prices for ' + this.exchangeName);
+        console.log('Checking prices for '.yellow + this.exchangeName);
 
         bter.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');

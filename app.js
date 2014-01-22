@@ -1,3 +1,10 @@
 var bitbot = require('./bitbot');
 
-bitbot.start();
+var marketName = process.argv[2];
+
+if (marketName.toString().indexOf('_') === -1) {
+    throw new Error('INVALID MARKET NAME');
+}
+else {
+    bitbot.start(marketName);
+}

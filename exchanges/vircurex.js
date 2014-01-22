@@ -1,3 +1,4 @@
+var colors = require('colors');
 var config = require('./../config'),
     Deferred = require("promised-io/promise").Deferred,
     all = require("promised-io/promise").all,
@@ -123,7 +124,7 @@ module.exports = {
         };
 
         console.time(this.exchangeName + ' getPrices');
-        console.log('Checking prices for ' + this.exchangeName);
+        console.log('Checking prices for '.yellow + this.exchangeName);
 
         base = market.split("_")[0];
         alt = market.split("_")[1];

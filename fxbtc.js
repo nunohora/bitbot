@@ -39,7 +39,27 @@ FxBTC.prototype.getTimestamp = function(time) {
 };
 
 FxBTC.prototype.getInfo = function(callback) {
-  this.query('get_info', null, callback);
+  var self = this;
+
+  if (!this.token) {
+    console.log('IS FETCHING TOKEN');
+    this._login({ username: self.username, password: self.password }, function (err, response) {
+        if (!err) {
+          self.token = response.token;
+          
+          var url = self.urlPost + '?op=get_info&token=' + self.token;
+
+          self.getHTTPS(url, callback);
+        }
+        else {
+          callback(true, JSON.parse(data));
+        }
+      });
+  }
+  else {
+    var url = self.urlPost + '?op=get_info&token=' + self.token;
+    self.getHTTPS(url, callback);
+  }
 };
 
 FxBTC.prototype._login = function(params, callback) {

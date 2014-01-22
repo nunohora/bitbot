@@ -1,3 +1,4 @@
+var colors = require('colors');
 var config = require('./../config');
 var cryptsy = require('cryptsy-api');
 var utils = require('../utils');
@@ -79,7 +80,7 @@ module.exports = {
         };
 
         console.time(this.exchangeName + ' getPrices');
-        console.log('Checking prices for ' + this.exchangeName);
+        console.log('Checking prices for '.yellow + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
         client.singleorderdata(market, function (err, data) {

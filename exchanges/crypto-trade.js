@@ -1,3 +1,4 @@
+var colors = require('colors');
 var config = require('./../config');
 var _ = require('underscore');
 var utils = require('../utils');
@@ -85,7 +86,7 @@ module.exports = {
         };
 
         console.time(this.exchangeName + ' getPrices');
-        console.log('Checking prices for ' + this.exchangeName);
+        console.log('Checking prices for '.yellow + this.exchangeName);
 
         cryptoTrade.depth({pair: market}, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
