@@ -12,26 +12,25 @@ module.exports = {
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
-        'btce': require('./exchanges/btce'),
+        // 'btce': require('./exchanges/btce'),
         // 'bter': require('./exchanges/bter'),
         // 'fxbtc': require('./exchanges/fxbtc'),
-        'crypto-trade': require('./exchanges/crypto-trade')
+        // 'crypto-trade': require('./exchanges/crypto-trade')
     },
 
-	start: function (marketName) {
+	start: function (marketName, tradeAmount) {
         console.log("starting bot");
 
-        var self = this;
-        
         config.market = marketName;
+        config.tradeAmount = tradeAmount;
 
-        all(self.exchangeMarkets['cryptsy'].getBalance(),
-            self.exchangeMarkets['vircurex'].getBalance(),
-            self.exchangeMarkets['btce'].getBalance(),
-            // self.exchangeMarkets['bter'].getBalance(),
-            // self.exchangeMarkets['fxbtc'].getBalance(),
-            self.exchangeMarkets['crypto-trade'].getBalance()
-        ).then(function () {
+        var self = this;
+        var promises = _.map(this.exchangeMarkets, function (exchange) {
+            return exchange.getBalance();
+        }, this);
+
+        all(promises).then(function () {
+            console.log('chegou aqui');
             console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
 
             self.startLookingAtPrices();
@@ -49,14 +48,11 @@ module.exports = {
 
                 console.log('*** Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
 
-                var group = all(
-                    self.exchangeMarkets['cryptsy'].getExchangeInfo(),
-                    self.exchangeMarkets['vircurex'].getExchangeInfo(),
-                    self.exchangeMarkets['btce'].getExchangeInfo(),
-                    // self.exchangeMarkets['bter'].getExchangeInfo(),
-                    // self.exchangeMarkets['fxbtc'].getExchangeInfo(),
-                    self.exchangeMarkets['crypto-trade'].getExchangeInfo()
-                ).then(function () {
+                var promises = _.map(self.exchangeMarkets, function (exchange) {
+                    return exchange.getExchangeInfo();
+                }, this);
+
+                var group = all(promises).then(function () {
                     hasFoundArb = self.calculateArbOpportunity();
 
                     //escaping the setInterval
@@ -125,7 +121,7 @@ module.exports = {
 
                     self.canLookForPrices = true;
 
-                    self.start(config.market);
+                    self.start(config.market, config.tradeAmount);
                 }
                 else {
                     console.log('Orders not filled yet... :(');
@@ -227,8 +223,6 @@ module.exports = {
                 }
             }, this);
         }, this);
-
-        console.log('aqui2');
 
         return totalBalances;
     }
