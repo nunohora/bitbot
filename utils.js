@@ -17,6 +17,7 @@ module.exports = {
             profit = potentialProfit - (potentialProfit * fee);
         }
 
+        console.log('amount: ', amount);
         return {
             amount: amount.toFixed(8),
             profit: profit.toFixed(decimals)

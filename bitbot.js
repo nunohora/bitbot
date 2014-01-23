@@ -12,9 +12,8 @@ module.exports = {
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
-        // 'btce': require('./exchanges/btce'),
-        // 'bter': require('./exchanges/bter'),
-        // 'fxbtc': require('./exchanges/fxbtc'),
+        'btce': require('./exchanges/btce')
+        // 'bter': require('./exchanges/bter')
         // 'crypto-trade': require('./exchanges/crypto-trade')
     },
 
@@ -22,7 +21,7 @@ module.exports = {
         console.log("starting bot");
 
         config.market = marketName;
-        config.tradeAmount = tradeAmount;
+        config.tradeAmount = +tradeAmount;
 
         var self = this;
         var promises = _.map(this.exchangeMarkets, function (exchange) {
@@ -30,7 +29,6 @@ module.exports = {
         }, this);
 
         all(promises).then(function () {
-            console.log('chegou aqui');
             console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
 
             self.startLookingAtPrices();

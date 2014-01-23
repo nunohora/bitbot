@@ -51,7 +51,9 @@ module.exports = {
         }, function (err, data) {
             if (!err) {
                 console.log('CryptoTrade create order response: ', data);
-                self.openOrderId = data.data.order_id;
+                if (data.data.remaining !== '0') {
+                    self.openOrderId = data.data.order_id;
+                }
 
                 deferred.resolve(data);
             }
@@ -65,14 +67,12 @@ module.exports = {
 
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 3);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 3);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     },
 
     getExchangeInfo: function () {
@@ -117,8 +117,17 @@ module.exports = {
                 console.log('CryptoTrade ORDER DATA');
                 console.log(data);
 
-                if (!err && (data.error === 'orderid must be a positive integer' || data.data.remaining === '0')) {
-                    deferred.resolve(true);
+                if (!err) {
+                    if (!self.openOrderId) {
+                        deferred.resolve(true);
+                    }
+                    else if (data.data) {
+                        deferred.resolve(false);
+                    }
+                    else {
+                        self.openOrderId = null;
+                        deferred.resolve(true);
+                    }
                 }
                 else {
                     deferred.resolve(false);
