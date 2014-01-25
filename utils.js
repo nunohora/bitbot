@@ -1,4 +1,5 @@
 var config = require('./config');
+var _ = require('underscore');
 
 module.exports = {
 
@@ -17,7 +18,6 @@ module.exports = {
             profit = potentialProfit - (potentialProfit * fee);
         }
 
-        console.log('amount: ', amount);
         return {
             amount: amount.toFixed(8),
             profit: profit.toFixed(decimals)
@@ -45,4 +45,30 @@ module.exports = {
             cost: cost.toFixed(decimals)
         };
     },
+
+    getBestArb: function (arrayOfArbs) {
+        return _.max(arrayOfArbs, function (arb) {
+            return arb.finalProfit;
+        }, this);
+    },
+
+    getTotalBalanceInExchanges: function (exchangeMarkets) {
+        var totalBalances = {};
+
+        _.each(exchangeMarkets, function (exchange) {
+            var exchangeBalance = exchange.balances;
+
+            _.each(exchangeBalance, function (currency, index) {
+                if (totalBalances[index]) {
+                    totalBalances[index] += currency;
+                }
+
+                else {
+                    totalBalances[index] = currency;
+                }
+            }, this);
+        }, this);
+
+        return totalBalances;
+    }
 };

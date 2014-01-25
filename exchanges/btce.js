@@ -33,8 +33,7 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred(),
-            self = this;
+        var deferred = new Deferred();
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
@@ -57,13 +56,11 @@ module.exports = {
 
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-
         return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-
         return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     },
 
@@ -104,7 +101,6 @@ module.exports = {
 
     checkOrderStatus: function () {
         var deferred = new Deferred(),
-            self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         btceTrade.activeOrders({pair: market}, function (err, data) {

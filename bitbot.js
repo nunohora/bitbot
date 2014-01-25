@@ -3,6 +3,7 @@ var colors = require('colors'),
     _ = require('underscore'),
     when = require('promised-io/promise').when,
     all = require('promised-io/promise').all,
+    utils = require('./utils'),
     Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
@@ -11,15 +12,15 @@ module.exports = {
 
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
-        'vircurex': require('./exchanges/vircurex'),
-        'btce': require('./exchanges/btce')
+        'vircurex': require('./exchanges/vircurex')
+        // 'btce': require('./exchanges/btce'),
         // 'bter': require('./exchanges/bter')
         // 'crypto-trade': require('./exchanges/crypto-trade')
     },
 
 	start: function (marketName, tradeAmount) {
         console.log("starting bot");
-
+        
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
@@ -37,7 +38,7 @@ module.exports = {
 
     startLookingAtPrices: function () {
         var self = this,
-            hasFoundArb = false,
+            arb = false,
             interval;
 
         var getExchangesInfo = function () {
@@ -51,12 +52,12 @@ module.exports = {
                 }, this);
 
                 var group = all(promises).then(function () {
-                    hasFoundArb = self.calculateArbOpportunity();
+                    arb = self.calculateArbOpportunity();
 
                     //escaping the setInterval
-                    if (hasFoundArb) {
+                    if (arb) {
                         clearInterval(interval);
-                        self.makeTrade(hasFoundArb);
+                        self.makeTrade(arb);
                     }
                     else {
                         self.canLookForPrices = true;
@@ -75,7 +76,7 @@ module.exports = {
             balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()],
             balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()];
 
-        console.log('&&&&&&&&&&&&&&&');
+        console.log('&&&&&&&&&&&&&&&'.yellow);
         console.log('Balance to buy: '.yellow, balanceToBuy);
         console.log('Required balance to buy: '.yellow, ex1.buy);
         console.log('Enough balance to buy?: '.yellow, balanceToBuy > (ex1.buy * ex1.amount));
@@ -105,26 +106,34 @@ module.exports = {
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
         var self = this,
-            interval;
+            interval,
+            isCheckingForStatus = false;
 
         function checkStatuses() {
-            var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
-            self.exchangeMarkets[ex2Name].checkOrderStatus()
-            ).then(function (response) {
-                console.log('check status response: ', response);
 
-                if (response[0] && response[1]) {
-                    console.log('Orders filled successfully!!!');
-                    clearInterval(interval);
+            if (!isCheckingForStatus) {
+                isCheckingForStatus = true;
 
-                    self.canLookForPrices = true;
+                var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
+                self.exchangeMarkets[ex2Name].checkOrderStatus()
+                ).then(function (response) {
+                    console.log('check status response: ', response);
 
-                    self.start(config.market, config.tradeAmount);
-                }
-                else {
-                    console.log('Orders not filled yet... :(');
-                }
-            });
+                    if (response[0] && response[1]) {
+                        console.log('Orders filled successfully!!!'.green);
+                        clearInterval(interval);
+
+                        self.canLookForPrices = true;
+
+                        self.start(config.market, config.tradeAmount);
+                    }
+                    else {
+                        console.log('Orders not filled yet... :('.red);
+                    }
+
+                    isCheckingForStatus = false;
+                });
+            }
         }
 
         interval = setInterval(checkStatuses, config.interval);
@@ -132,8 +141,8 @@ module.exports = {
 
     calculateArbOpportunity: function () {
         var exArray = [],
-            viability,
-            arbFound = false,
+            isArb = false,
+            arrayOfArbs = [],
             keys = _.keys(this.exchangeMarkets);
 
         //compare all exchanges prices from each exchange with each other
@@ -142,30 +151,30 @@ module.exports = {
             for (var j = 0; j < len; j++) {
                 var ex2 = this.exchangeMarkets[keys[j]];
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
-                    arbFound = this.calculateViability(ex1, ex2);
-                    if (arbFound) {
-                        break;
+                    isArb = this.calculateViability(ex1, ex2);
+                    if (isArb) {
+                        arrayOfArbs.push(isArb);
                     }
                 }
             }
             exArray[ex1.exchangeName] = true;
-            if (arbFound) {
-                break;
-            }
         }
-        return arbFound;
+
+        if (isArb) {
+            isArb = utils.getBestArb(arrayOfArbs);
+        }
+
+        return isArb;
     },
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
         else if (ex1.prices.sell.price > ex2.prices.buy.price) {
             isViable = this.calculateAfterFees(ex2, ex1);
         }
-
         return isViable;
     },
 
@@ -173,12 +182,17 @@ module.exports = {
         var amount = config.tradeAmount,
             amountToBuy,
             amountToSell,
-            cryptsyFee;
+            cryptsyFee,
+            finalProfit,
+            cost,
+            profit;
 
-        var cost = ex1.calculateCost(amount);
-        var profit = ex2.calculateProfit(amount);
+        cost = ex1.calculateCost(amount);
+        profit = ex2.calculateProfit(amount);
 
-        if ((profit.profit - cost.cost).toFixed(8) > 0) {
+        finalProfit = (profit.profit - cost.cost).toFixed(8);
+
+        if (finalProfit > 0) {
 
             console.log("\007");
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
@@ -197,7 +211,8 @@ module.exports = {
                     name: ex2.exchangeName,
                     sell: ex2.prices.sell.price,
                     amount: profit.amount
-                }
+                },
+                finalProfit: finalProfit
             };
         }
         else {

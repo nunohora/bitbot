@@ -47,13 +47,11 @@ module.exports = {
 
     calculateProfit: function (amount) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-
         return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
     },
 
     calculateCost: function (amount) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-
         return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
     },
 
