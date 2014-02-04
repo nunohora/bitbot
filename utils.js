@@ -48,7 +48,7 @@ module.exports = {
 
     getBestArb: function (arrayOfArbs) {
         return _.max(arrayOfArbs, function (arb) {
-            return arb.finalProfit;
+            return +arb.finalProfit;
         }, this);
     },
 

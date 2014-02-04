@@ -12,10 +12,10 @@ module.exports = {
 
     exchangeMarkets: {
         'cryptsy': require('./exchanges/cryptsy'),
-        'vircurex': require('./exchanges/vircurex')
-        // 'btce': require('./exchanges/btce'),
-        // 'bter': require('./exchanges/bter')
-        // 'crypto-trade': require('./exchanges/crypto-trade')
+        'vircurex': require('./exchanges/vircurex'),
+        'btce': require('./exchanges/btce'),
+        'bter': require('./exchanges/bter'),
+        'crypto-trade': require('./exchanges/crypto-trade')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -39,7 +39,8 @@ module.exports = {
     startLookingAtPrices: function () {
         var self = this,
             arb = false,
-            interval;
+            interval,
+            result;
 
         var getExchangesInfo = function () {
             if (self.canLookForPrices) {
@@ -52,11 +53,18 @@ module.exports = {
                 }, this);
 
                 var group = all(promises).then(function () {
-                    arb = self.calculateArbOpportunity();
+                    console.log('*** Finished Checking Exchange Prices *** '.blue);
 
+                    result = self.calculateArbOpportunity();
+
+                    console.log('result');
+                    console.log(result);
                     //escaping the setInterval
-                    if (arb) {
+                    if (result.length) {
                         clearInterval(interval);
+
+                        self.getBestArb();
+
                         self.makeTrade(arb);
                     }
                     else {
@@ -67,6 +75,15 @@ module.exports = {
         };
 
         interval = setInterval(getExchangesInfo, config.interval);
+    },
+
+    getBestArb: function (arrayOfArbs) {
+      var orderByProfit = _.sortBy(arrayOfArbs, function (arb) {
+        return -arb.finalProfit;
+      });
+
+      console.log('orderByProfit: ', orderByProfit);
+      
     },
 
     makeTrade: function (arb) {
@@ -84,6 +101,7 @@ module.exports = {
         console.log('Required balance to sell: '.yellow, ex2.amount);
         console.log('Enough balance to sell?: '.yellow, balanceToSell > ex2.amount);
         console.log('&&&&&&&&&&&&&&&'.yellow);
+
 
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!');
@@ -141,7 +159,7 @@ module.exports = {
 
     calculateArbOpportunity: function () {
         var exArray = [],
-            isArb = false,
+            arb,
             arrayOfArbs = [],
             keys = _.keys(this.exchangeMarkets);
 
@@ -151,7 +169,8 @@ module.exports = {
             for (var j = 0; j < len; j++) {
                 var ex2 = this.exchangeMarkets[keys[j]];
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
-                    isArb = this.calculateViability(ex1, ex2);
+                    arb = this.calculateViability(ex1, ex2);
+                    
                     if (isArb) {
                         arrayOfArbs.push(isArb);
                     }
@@ -160,11 +179,7 @@ module.exports = {
             exArray[ex1.exchangeName] = true;
         }
 
-        if (isArb) {
-            isArb = utils.getBestArb(arrayOfArbs);
-        }
-
-        return isArb;
+        return arrayOfArbs;
     },
 
     calculateViability: function (ex1, ex2) {

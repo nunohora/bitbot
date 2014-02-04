@@ -38,6 +38,8 @@ module.exports = {
                 deferred.resolve();
             }
             else {
+                console.log('VIRCUREX ERROR');
+                console.log(err);
                 deferred.reject(err);
             }
         });
