@@ -38,7 +38,7 @@ module.exports = {
 
     startLookingAtPrices: function () {
         var self = this,
-            arb = false,
+            arb,
             interval,
             result;
 
@@ -57,15 +57,20 @@ module.exports = {
 
                     result = self.calculateArbOpportunity();
 
-                    console.log('result');
-                    console.log(result);
                     //escaping the setInterval
                     if (result.length) {
                         clearInterval(interval);
 
-                        self.getBestArb();
+                        arb = self.getBestArb(result);
 
-                        self.makeTrade(arb);
+                        if (arb) {
+                            console.log('curr Arb');
+                            console.log(arb);
+                            self.makeTrade(arb);
+                        }
+                        else {
+                            self.canLookForPrices = true;
+                        }
                     }
                     else {
                         self.canLookForPrices = true;
@@ -78,20 +83,32 @@ module.exports = {
     },
 
     getBestArb: function (arrayOfArbs) {
-      var orderByProfit = _.sortBy(arrayOfArbs, function (arb) {
-        return -arb.finalProfit;
-      });
+      var orderedByProfit = this.orderByProfit(arrayOfArbs),
+          bestArb,
+          currArb;
 
-      console.log('orderByProfit: ', orderByProfit);
-      
+      for (var i = 0; i < arrayOfArbs.length; i++) {
+        currArb = arrayOfArbs[i];
+
+        if (this.checkExchangeForEnoughBalance(currArb)) {
+            return currArb;
+        }
+      }
+
+      return false;
     },
 
-    makeTrade: function (arb) {
-        var self = this,
-            ex1 = arb.ex1,
+    orderByProfit: function (arrayOfArbs) {
+        return _.sortBy(arrayOfArbs, function (arb) {
+            return -(+arb.finalProfit);
+        });
+    },
+
+    checkExchangeForEnoughBalance: function (arb) {
+        var ex1 = arb.ex1,
             ex2 = arb.ex2,
-            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()],
-            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()];
+            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()],
+            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()];
 
         console.log('&&&&&&&&&&&&&&&'.yellow);
         console.log('Balance to buy: '.yellow, balanceToBuy);
@@ -102,24 +119,31 @@ module.exports = {
         console.log('Enough balance to sell?: '.yellow, balanceToSell > ex2.amount);
         console.log('&&&&&&&&&&&&&&&'.yellow);
 
-
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!');
-
-            var group = all(
-                self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
-                self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
-            ).then(function (response) {
-                if (response[0] && response[1]) {
-                    self.checkOrderStatuses(ex1.name, ex2.name);
-                }
-            });
+            return true;
         }
         else {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(");
-            self.canLookForPrices = true;
-            self.startLookingAtPrices();
+            return false;
         }
+    },
+
+    makeTrade: function (arb) {
+        console.log(arb);
+
+        var self = this,
+            ex1 = arb.ex1,
+            ex2 = arb.ex2;
+
+        var group = all(
+            self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
+            self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
+        ).then(function (response) {
+            if (response[0] && response[1]) {
+                self.checkOrderStatuses(ex1.name, ex2.name);
+            }
+        });
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
@@ -128,7 +152,6 @@ module.exports = {
             isCheckingForStatus = false;
 
         function checkStatuses() {
-
             if (!isCheckingForStatus) {
                 isCheckingForStatus = true;
 
@@ -143,7 +166,7 @@ module.exports = {
 
                         self.canLookForPrices = true;
 
-                        self.start(config.market, config.tradeAmount);
+                        // self.start(config.market, config.tradeAmount);
                     }
                     else {
                         console.log('Orders not filled yet... :('.red);
@@ -171,8 +194,8 @@ module.exports = {
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arb = this.calculateViability(ex1, ex2);
                     
-                    if (isArb) {
-                        arrayOfArbs.push(isArb);
+                    if (arb) {
+                        arrayOfArbs.push(arb);
                     }
                 }
             }

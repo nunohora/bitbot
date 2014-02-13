@@ -1,12 +1,13 @@
-var colors = require('colors');
-var config = require('./../config'),
-    Deferred = require("promised-io/promise").Deferred,
-    all = require("promised-io/promise").all,
-    utils = require('../utils'),
-    when = require('promised-io/promise').when,
-    _ = require('underscore'),
-    Vircurex = require('vircurex'),
-	vircurex = new Vircurex(config.vircurex.username, {
+var colors          = require('colors'),
+    config          = require('./../config'),
+    Deferred        = require("promised-io/promise").Deferred,
+    all             = require("promised-io/promise").all,
+    utils           = require('../utils'),
+    when            = require('promised-io/promise').when,
+    _               = require('underscore'),
+    Vircurex        = require('vircurex');
+
+var vircurex = new Vircurex(config.vircurex.username, {
 		'getBalance': config.vircurex.apiKey,
         'getBalances': config.vircurex.apiKey,
         'createOrder': config.vircurex.apiKey,
