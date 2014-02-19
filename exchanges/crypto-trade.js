@@ -1,11 +1,11 @@
-var colors = require('colors');
-var config = require('./../config');
-var _ = require('underscore');
-var utils = require('../utils');
+var colors          = require('colors'),
+    _               = require('underscore'),
+    Deferred        = require("promised-io/promise").Deferred,
+    config          = require('./../config'),
+    utils           = require('../utils'),
+    CryptoTrade     = require('../crypto-trade');
 
-var CryptoTrade = require('../crypto-trade'),
-    cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret),
-    Deferred = require("promised-io/promise").Deferred;
+var cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret);
 
 module.exports = {
 
@@ -21,18 +21,25 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
+        this.balances = {};
+
         cryptoTrade.getInfo(function (err, data) {
             if (!err) {
                 _.each(data.data.funds, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 }, self);
-
-                deferred.resolve();
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                deferred.reject(err);
+                console.log('Error when checking balance for '.red + self.exchangeName);
             }
+
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -92,7 +99,6 @@ module.exports = {
             console.timeEnd(self.exchangeName + ' getPrices');
 
             if (!err && data) {
-
                 self.prices.buy.price = _.first(data.asks)[0];
                 self.prices.buy.quantity = _.first(data.asks)[1];
 
@@ -102,8 +108,12 @@ module.exports = {
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
 
-            deferred.resolve();
+            try {deferred.resolve();} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
@@ -119,20 +129,24 @@ module.exports = {
 
                 if (!err) {
                     if (!self.openOrderId) {
-                        deferred.resolve(true);
+                        try { deferred.resolve(true);} catch (e){}
                     }
                     else if (data.data) {
-                        deferred.resolve(false);
+                        try { deferred.resolve(false);} catch (e){}
                     }
                     else {
                         self.openOrderId = null;
-                        deferred.resolve(true);
+                        try { deferred.resolve(true);} catch (e){}
                     }
                 }
                 else {
-                    deferred.resolve(false);
+                    try { deferred.resolve(false);} catch (e){}
                 }
             });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }

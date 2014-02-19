@@ -30,20 +30,26 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
+        this.balances = {};
+
         vircurex.getBalances(function (err, data) {
             if (!err) {
                 _.each(data.balances, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance.availablebalance;
                 });
-
-                deferred.resolve();
+                
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                console.log('VIRCUREX ERROR');
-                console.log(err);
-                deferred.reject(err);
+                console.log('Error when checking balance for '.red + self.exchangeName);
             }
+
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -113,11 +119,11 @@ module.exports = {
     },
 
     getExchangeInfo: function () {
-        var deferred = new Deferred(),
-            market = config[this.exchangeName].marketMap[config.market],
+        var self = this,
+            deferred    = new Deferred(),
+            market      = config[this.exchangeName].marketMap[config.market],
             base,
-            alt,
-            self = this;
+            alt;
 
         this.prices = {
             buy: {},
@@ -133,7 +139,6 @@ module.exports = {
         vircurex.getOrders(base, alt, function (err, data) {
             console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
-
                 self.prices.buy.price = _.first(data.asks)[0];
                 self.prices.buy.quantity = _.first(data.asks)[1];
 
@@ -141,13 +146,14 @@ module.exports = {
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve(true);
             }
-            else {
-                console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.resolve(false);
-            }
+
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
@@ -160,12 +166,16 @@ module.exports = {
             console.log(data);
 
             if (!err && data.numberorders === 0) {
-                deferred.resolve(true);
+                try { deferred.resolve(true);} catch (e){}
             }
             else {
-                deferred.resolve(false);
+                try { deferred.resolve(false);} catch (e){}
             }
         });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }

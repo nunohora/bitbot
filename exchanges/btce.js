@@ -1,11 +1,11 @@
-var colors = require('colors');
-var config = require('./../config');
-var _ = require('underscore');
+var colors      = require('colors'),
+    _           = require('underscore'),
+    Deferred    = require("promised-io/promise").Deferred,
+    config      = require('./../config'),
+    BTCE        = require('btce'),
+    utils       = require('../utils');
 
-var BTCE = require('btce'),
-    btceTrade = new BTCE(config['btce'].apiKey, config['btce'].secret),
-    Deferred = require("promised-io/promise").Deferred,
-    utils = require('../utils');
+var btceTrade = new BTCE(config['btce'].apiKey, config['btce'].secret);
 
 module.exports = {
 
@@ -19,15 +19,23 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
+        this.balances = {};
+        
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
-                deferred.resolve();
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                deferred.reject(err);
+                console.log('Error when checking balance for '.red + self.exchangeName);
             }
+
+            try {deferred.resolve();} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -88,31 +96,40 @@ module.exports = {
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve();
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.resolve();
             }
+
+            try {deferred.resolve();} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
 
     checkOrderStatus: function () {
         var deferred = new Deferred(),
+            self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         btceTrade.activeOrders({pair: market}, function (err, data) {
             console.log('BTCE ORDER DATA: ', data);
 
             if (!err && data.error === 'no orders') {
-                deferred.resolve(true);
+                try { deferred.resolve(true);} catch (e){}
             }
             else {
-                deferred.resolve(false);
+                try { deferred.resolve(false);} catch (e){}
             }
         });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }

@@ -16,16 +16,19 @@ module.exports = {
         'btce': require('./exchanges/btce'),
         'bter': require('./exchanges/bter'),
         'crypto-trade': require('./exchanges/crypto-trade')
+        // 'kraken': require('./exchanges/kraken')
     },
 
 	start: function (marketName, tradeAmount) {
-        console.log("starting bot");
-        
+        var self = this,
+            promises;
+
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
-        var self = this;
-        var promises = _.map(this.exchangeMarkets, function (exchange) {
+        console.log("starting bot");
+
+        promises = _.map(this.exchangeMarkets, function (exchange) {
             return exchange.getBalance();
         }, this);
 
@@ -107,8 +110,8 @@ module.exports = {
     checkExchangeForEnoughBalance: function (arb) {
         var ex1 = arb.ex1,
             ex2 = arb.ex2,
-            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()],
-            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()];
+            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()] || 0,
+            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()] || 0;
 
         console.log('&&&&&&&&&&&&&&&'.yellow);
         console.log('Balance to buy: '.yellow, balanceToBuy);

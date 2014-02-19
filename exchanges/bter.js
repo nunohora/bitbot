@@ -1,12 +1,11 @@
-var colors = require('colors');
+var colors      = require('colors'),
+    config      = require('./../config'),
+    _           = require('underscore'),
+    Deferred    = require("promised-io/promise").Deferred,
+    utils       = require('../utils'),
+    Bter        = require('../bter');
 
-var config = require('./../config'),
-    _ = require('underscore');
-
-var Bter = require('../bter'),
-    bter = new Bter(config['bter'].apiKey, config['bter'].secret),
-    Deferred = require("promised-io/promise").Deferred,
-    utils = require('../utils');
+var bter = new Bter(config['bter'].apiKey, config['bter'].secret);
 
 module.exports = {
 
@@ -20,19 +19,25 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
+        this.balances = {};
+
         bter.getInfo(function (err, data) {
             if (!err) {
-
                 _.each(data.available_funds, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 }, self);
-
-                deferred.resolve();
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                deferred.reject(err);
+                console.log('Error when checking balance for '.red + self.exchangeName);
             }
+
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -52,7 +57,7 @@ module.exports = {
                 deferred.resolve(true);
             }
             else {
-                deferred.resolve(false);
+                deferred.reject();
             }
         });
 
@@ -102,30 +107,37 @@ module.exports = {
                 }
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-                deferred.resolve();
             }
             else {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
-                deferred.resolve();
             }
+
+            try {deferred.resolve();} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
 
     checkOrderStatus: function () {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this,
+            result;
         
         bter.getOrderList(function (err, data) {
             console.log('BTER ORDER DATA: ', data);
 
-            if (!err && _.isEmpty(data.orders)) {
-                deferred.resolve(true);
-            }
-            else {
-                deferred.resolve(false);
-            }
+            result = !err && _.isEmpty(data.orders);
+
+            try {deferred.resolve(result);} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }

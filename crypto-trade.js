@@ -105,6 +105,7 @@ CryptoTrade.prototype.query = function(method, params, callback) {
         callback(true, null);
       }
       else {
+        
         callback(false, JSON.parse(data));
       }
     });

@@ -1,10 +1,11 @@
-var colors = require('colors');
-var config = require('./../config');
-var cryptsy = require('cryptsy-api');
-var utils = require('../utils');
-var _ = require('underscore');
+var colors      = require('colors'),
+    Deferred    = require("promised-io/promise").Deferred,
+    _           = require('underscore'),
+    utils       = require('../utils'),
+    config      = require('./../config'),
+    cryptsy     = require('cryptsy-api');
+
 var client = new cryptsy(config['cryptsy'].publicKey, config['cryptsy'].privateKey);
-var Deferred = require("promised-io/promise").Deferred;
 
 module.exports = {
 
@@ -20,18 +21,24 @@ module.exports = {
         var deferred = new Deferred(),
             self = this;
 
+        this.balances = {};
+
         client.getinfo(function (err, data) {
             if (!err) {
                 _.each(data.return.balances_available, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 });
-
-                deferred.resolve();
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                deferred.reject(data.error);
+                console.log('Error when checking balance for '.red + self.exchangeName);
             }
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -96,8 +103,12 @@ module.exports = {
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
 
-            deferred.resolve();
+            try { deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
@@ -113,13 +124,16 @@ module.exports = {
 
             if (!err && !data.return) {
                 self.openOrderId = null;
-
-                deferred.resolve(false);
+                try { deferred.resolve(false);} catch (e){}
             }
             else {
-                deferred.resolve(false);
+                try { deferred.resolve(false);} catch (e){}
             }
         });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }
