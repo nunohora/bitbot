@@ -15,7 +15,8 @@ module.exports = {
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         'bter': require('./exchanges/bter'),
-        'crypto-trade': require('./exchanges/crypto-trade')
+        'crypto-trade': require('./exchanges/crypto-trade'),
+        'bitfinex': require('./exchanges/bitfinex')
         // 'kraken': require('./exchanges/kraken')
     },
 
@@ -69,7 +70,7 @@ module.exports = {
                         if (arb) {
                             console.log('curr Arb');
                             console.log(arb);
-                            self.makeTrade(arb);
+                            // self.makeTrade(arb);
                         }
                         else {
                             self.canLookForPrices = true;
