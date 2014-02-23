@@ -60,14 +60,14 @@ module.exports = {
         return deferred.promise;
     },
 
-    calculateProfit: function (amount) {
+    calculateProfit: function (amount, decimals) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, decimals);
     },
 
-    calculateCost: function (amount) {
+    calculateCost: function (amount, decimals) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, decimals);
     },
 
     getExchangeInfo: function () {
@@ -80,22 +80,24 @@ module.exports = {
             sell : {}
         };
 
-        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        kraken.api('Depth', {'pair': market}, function (err, data) {
+        kraken.api('Depth', {'pair': market, 'count': 10}, function (err, data) {
 
-            console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
-                var resultMarket = _.keys(data.result);
+                var resultMarket = _.keys(data.result),
+                    tempData = data.result[resultMarket];
 
-                console.log(data.result[resultMarket]);
+                //ugly, but will do for now
+                if (config.market === 'LTC_BTC') {
+                    self.prices.sell.price = (1/_.first(tempData.asks)[0]).toFixed(5);
+                    self.prices.sell.quantity = _.first(tempData.asks)[1];
 
-                // self.prices.buy.price = _.first(data.asks)[0];
-                // self.prices.buy.quantity = _.first(data.asks)[1];
+                    self.prices.buy.price = (1/_.first(tempData.bids)[0]).toFixed(5);
+                    self.prices.buy.quantity = _.first(tempData.bids)[1];
+                }
 
-                // self.prices.sell.price = _.first(data.bids)[0];
-                // self.prices.sell.quantity = _.first(data.bids)[1];
+                console.log(self.prices);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }

@@ -31,7 +31,6 @@ module.exports = {
                     }
                 }, self);
 
-                console.log(self.balances);
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -72,14 +71,14 @@ module.exports = {
         return deferred.promise;
     },
 
-    calculateProfit: function (amount) {
+    calculateProfit: function (amount, decimals) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, decimals);
     },
 
-    calculateCost: function (amount) {
+    calculateCost: function (amount, decimals) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, decimals);
     },
 
     getExchangeInfo: function () {
@@ -92,11 +91,9 @@ module.exports = {
             sell : {}
         };
 
-        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for '.yellow + this.exchangeName);
 
         bitfinex.orderbook(market, function (err, data) {
-            console.timeEnd(self.exchangeName + ' getPrices');
             if (!err) {
                 data = JSON.parse(data.body);
 
@@ -106,7 +103,6 @@ module.exports = {
                 self.prices.sell.price = _.first(data.bids).price;
                 self.prices.sell.quantity = _.first(data.bids).amount;
 
-                console.log(self.prices);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {

@@ -19,8 +19,8 @@ module.exports = {
         }
 
         return {
-            amount: amount.toFixed(8),
-            profit: profit.toFixed(decimals)
+            amount: amount.toFixed(decimals),
+            profit: profit.toFixed(8)
         };
     },
 
@@ -42,7 +42,7 @@ module.exports = {
 
         return {
             amount: amount.toFixed(decimals),
-            cost: cost.toFixed(decimals)
+            cost: cost.toFixed(8)
         };
     },
 
@@ -50,6 +50,10 @@ module.exports = {
         return _.max(arrayOfArbs, function (arb) {
             return +arb.finalProfit;
         }, this);
+    },
+
+    getSmallestDecimal: function (ex1, ex2) {
+        return _.min([config[ex1.exchangeName].decimals, config[ex2.exchangeName].decimals]);
     },
 
     getTotalBalanceInExchanges: function (exchangeMarkets) {

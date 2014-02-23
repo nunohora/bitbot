@@ -14,10 +14,11 @@ module.exports = {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        'bter': require('./exchanges/bter'),
-        'crypto-trade': require('./exchanges/crypto-trade'),
-        'bitfinex': require('./exchanges/bitfinex')
-        // 'kraken': require('./exchanges/kraken')
+        // 'bter': require('./exchanges/bter'),
+        // 'crypto-trade': require('./exchanges/crypto-trade'),
+        'bitfinex': require('./exchanges/bitfinex'),
+        'kraken': require('./exchanges/kraken'),
+        'coins-e': require('./exchanges/coins-e')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -68,8 +69,6 @@ module.exports = {
                         arb = self.getBestArb(result);
 
                         if (arb) {
-                            console.log('curr Arb');
-                            console.log(arb);
                             // self.makeTrade(arb);
                         }
                         else {
@@ -211,6 +210,7 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
+
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
@@ -227,10 +227,17 @@ module.exports = {
             cryptsyFee,
             finalProfit,
             cost,
-            profit;
+            profit,
+            smallestDecimal;
 
-        cost = ex1.calculateCost(amount);
-        profit = ex2.calculateProfit(amount);
+        smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
+
+        cost = ex1.calculateCost(amount, smallestDecimal);
+        profit = ex2.calculateProfit(amount, smallestDecimal);
+
+        console.log('###########'.green);
+        console.log(ex1.exchangeName + ' cost: ' + cost.cost);
+        console.log(ex2.exchangeName + ' profit: ' + profit.profit);
 
         finalProfit = (profit.profit - cost.cost).toFixed(8);
 

@@ -64,14 +64,14 @@ module.exports = {
         return deferred.promise;
     },
 
-    calculateProfit: function (amount) {
+    calculateProfit: function (amount, decimals) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
-        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, 8);
+        return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, decimals);
     },
 
-    calculateCost: function (amount) {
+    calculateCost: function (amount, decimals) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
-        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, 8);
+        return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, decimals);
     },
 
     getExchangeInfo: function () {
@@ -84,12 +84,10 @@ module.exports = {
             sell : {}
         };
 
-        console.time(this.exchangeName + ' getPrices');
         console.log('Checking prices for '.yellow + this.exchangeName);
 
         // console.log('Getting Market Prices for: ', this.exchangeName);
         client.singleorderdata(market, function (err, data) {
-            console.timeEnd(self.exchangeName + ' getPrices');
 
             if (!err && data.return) {
                 data = data.return[config.market.split('_')[0]];

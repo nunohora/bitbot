@@ -1,32 +1,30 @@
-var colors          = require('colors'),
-    _               = require('underscore'),
-    Deferred        = require("promised-io/promise").Deferred,
-    config          = require('./../config'),
-    utils           = require('../utils'),
-    CryptoTrade     = require('../crypto-trade');
+var colors      = require('colors'),
+    _           = require('underscore'),
+    Deferred    = require("promised-io/promise").Deferred,
+    config      = require('./../config'),
+    Coinse        = require('../coins-e'),
+    utils       = require('../utils');
 
-var cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret);
+var coinse = new Coinse(config['coins-e'].apiKey, config['coins-e'].secret);
 
 module.exports = {
 
-    exchangeName: 'crypto-trade',
+    exchangeName: 'coins-e',
 
     balances: {},
 
     prices: {},
 
-    openOrderId: null,
-
-    getBalance: function (type) {
+    getBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
         this.balances = {};
-
-        cryptoTrade.getInfo(function (err, data) {
+        
+        coinse.getInfo(function (err, data) {
             if (!err) {
-                _.each(data.data.funds, function (balance, index) {
-                    self.balances[index.toLowerCase()] = +balance;
+                _.each(data.wallets, function (balance, index) {
+                    self.balances[index.toLowerCase()] = +balance.a;
                 }, self);
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -34,7 +32,7 @@ module.exports = {
                 console.log('Error when checking balance for '.red + self.exchangeName);
             }
 
-            try { deferred.resolve();} catch (e){}
+            try {deferred.resolve();} catch (e) {}
         });
 
         setTimeout(function () {
@@ -45,27 +43,21 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred(),
-            self = this;
+        var deferred = new Deferred();
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        cryptoTrade.trade({
-            pair: market.toLowerCase(),
-            type: type.charAt(0).toUpperCase() + type.slice(1),
+        coinse.trade({
+            pair: config[this.exchangeName].marketMap[market],
+            order_type: type,
             rate: rate,
-            amount: amount
+            quantity: amount
         }, function (err, data) {
-            if (!err) {
-                console.log('CryptoTrade create order response: ', data);
-                if (data.data.remaining !== '0') {
-                    self.openOrderId = data.data.order_id;
-                }
-
-                deferred.resolve(data);
+            if (!err && data.success === 1) {
+                deferred.resolve(true);
             }
             else {
-                deferred.reject(err);
+                deferred.resolve(false);
             }
         });
 
@@ -94,22 +86,25 @@ module.exports = {
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        cryptoTrade.depth({pair: market}, function (err, data) {
-            if (!err && data) {
-                self.prices.buy.price = _.first(data.asks)[0];
-                self.prices.buy.quantity = _.first(data.asks)[1];
+        coinse.depth({pair: market}, function (err, data) {
+            if (!err) {
+                self.prices.buy.price = _.first(data.marketdepth.asks)['r'];
+                self.prices.buy.quantity = _.first(data.marketdepth.asks)['q'];
 
-                self.prices.sell.price = _.first(data.bids)[0];
-                self.prices.sell.quantity = _.first(data.bids)[1];
+                self.prices.sell.price = _.first(data.marketdepth.bids)['r'];
+                self.prices.sell.quantity = _.first(data.marketdepth.bids)['q'];
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            }
+            else {
+                console.log('Error! Failed to get prices for ' + self.exchangeName);
             }
 
             try {deferred.resolve();} catch (e) {}
         });
 
         setTimeout(function () {
-            try {eferred.resolve();} catch (e){}
+            try {deferred.resolve();} catch (e){}
         }, config.requestTimeouts.prices);
         return deferred.promise;
     },
@@ -119,26 +114,19 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-            cryptoTrade.orderInfo({orderid: self.openOrderId}, function (err, data) {
-                console.log('CryptoTrade ORDER DATA');
-                console.log(data);
+        coinse.activeOrders({
+            pair: market,
+            filter: 'active'
+        }, function (err, data) {
+            console.log('COINS-E ORDER DATA: ', data);
 
-                if (!err) {
-                    if (!self.openOrderId) {
-                        try { deferred.resolve(true);} catch (e){}
-                    }
-                    else if (data.data) {
-                        try { deferred.resolve(false);} catch (e){}
-                    }
-                    else {
-                        self.openOrderId = null;
-                        try { deferred.resolve(true);} catch (e){}
-                    }
-                }
-                else {
-                    try { deferred.resolve(false);} catch (e){}
-                }
-            });
+            if (!err && data.error === 'no orders') {
+                try { deferred.resolve(true);} catch (e){}
+            }
+            else {
+                try { deferred.resolve(false);} catch (e){}
+            }
+        });
 
         setTimeout(function () {
             try { deferred.resolve(false);} catch (e){}
@@ -146,4 +134,5 @@ module.exports = {
 
         return deferred.promise;
     }
+
 };
