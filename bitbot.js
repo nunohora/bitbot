@@ -17,8 +17,8 @@ module.exports = {
         // 'bter': require('./exchanges/bter'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
-        'kraken': require('./exchanges/kraken'),
-        'coins-e': require('./exchanges/coins-e')
+        // 'kraken': require('./exchanges/kraken'),
+        // 'coins-e': require('./exchanges/coins-e')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -69,7 +69,7 @@ module.exports = {
                         arb = self.getBestArb(result);
 
                         if (arb) {
-                            // self.makeTrade(arb);
+                            self.makeTrade(arb);
                         }
                         else {
                             self.canLookForPrices = true;
