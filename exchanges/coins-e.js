@@ -47,6 +47,8 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
+        amount = 0;
+
         coinse.trade({
             pair: config[this.exchangeName].marketMap[market],
             order_type: type,
@@ -94,6 +96,7 @@ module.exports = {
                 self.prices.sell.price = _.first(data.marketdepth.bids)['r'];
                 self.prices.sell.quantity = _.first(data.marketdepth.bids)['q'];
 
+                console.log(self.prices);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {

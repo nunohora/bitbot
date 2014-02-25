@@ -78,6 +78,8 @@ module.exports = {
 
         this.orderType = type;
 
+        amount = 0;
+        
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
             console.log('Vircurex create order data: ');
             console.log('error: ', err);

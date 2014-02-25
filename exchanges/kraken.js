@@ -15,6 +15,10 @@ module.exports = {
 
     prices: {},
 
+    balancesMap: {
+        'XXBT': 'btc'
+    },
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -23,8 +27,10 @@ module.exports = {
         
         kraken.api('Balance', null, function (err, data) {
             if (!err) {
-                console.log('Kraken Balances - ', data);
-                self.balances = data.result;
+                _.each(data.result, function (balance, idx) {
+                    self.balances[self.balancesMap[idx]] = +balance;
+                });
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -41,14 +47,33 @@ module.exports = {
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
 
+        //ugly ugly
+        if (config.market === 'LTC_BTC') {
+            type = type === 'buy' ? 'sell' : 'buy';
+            rate = (1/rate).toFixed(5);
+        }
+
+        console.log('KRAKEN TEST!!!!!');
+        console.log('market: ', market);
+        console.log('type: ', type);
+        console.log('rate: ', rate);
+        console.log('amount: ', amount);
+
+        amount = 0;
+
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        btceTrade.trade({
+        kraken.api('AddOrder', {
             pair: config[this.exchangeName].marketMap[market],
             type: type,
+            ordertype: 'limit',
             rate: rate,
             amount: amount
         }, function (err, data) {
+            console.log('KRAKEN ORDER RESPONSE!!');
+            console.log('err: ', err);
+            console.log('data: ', data);
+
             if (!err && data.success === 1) {
                 deferred.resolve(true);
             }
@@ -91,10 +116,10 @@ module.exports = {
                 //ugly, but will do for now
                 if (config.market === 'LTC_BTC') {
                     self.prices.sell.price = (1/_.first(tempData.asks)[0]).toFixed(5);
-                    self.prices.sell.quantity = _.first(tempData.asks)[1];
+                    self.prices.sell.quantity = (_.first(tempData.asks)[1] * _.first(tempData.asks)[0]).toFixed(8);
 
                     self.prices.buy.price = (1/_.first(tempData.bids)[0]).toFixed(5);
-                    self.prices.buy.quantity = _.first(tempData.bids)[1];
+                    self.prices.buy.quantity = (_.first(tempData.bids)[1] * _.first(tempData.bids)[0]).toFixed(8);
                 }
 
                 console.log(self.prices);
@@ -129,5 +154,4 @@ module.exports = {
 
         return deferred.promise;
     }
-
 };

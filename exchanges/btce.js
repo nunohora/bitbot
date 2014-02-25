@@ -45,6 +45,8 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
+        amount = 0;
+
         btceTrade.trade({
             pair: config[this.exchangeName].marketMap[market],
             type: type,
@@ -93,6 +95,8 @@ module.exports = {
                 self.prices.sell.price = _.first(data.bids)[0];
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
+                console.log(self.prices);
+                
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {

@@ -54,6 +54,8 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
+        amount = 0;
+        
         bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data, orderId) {
             console.log('orderId:', JSON.parse(orderId)['order_id']);
             
@@ -113,6 +115,7 @@ module.exports = {
         setTimeout(function () {
             try {deferred.resolve();} catch (e){}
         }, config.requestTimeouts.prices);
+
         return deferred.promise;
     },
 

@@ -49,7 +49,9 @@ module.exports = {
             self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
+        
+        amount = 0;
+        
         client.createorder(marketId, type, amount, rate, function (err, data) {
             if (!err && data.success === '1') {
                 self.openOrderId = +data.orderid;

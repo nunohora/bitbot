@@ -16,9 +16,9 @@ module.exports = {
         'btce': require('./exchanges/btce'),
         // 'bter': require('./exchanges/bter'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
-        'bitfinex': require('./exchanges/bitfinex'),
-        // 'kraken': require('./exchanges/kraken'),
-        // 'coins-e': require('./exchanges/coins-e')
+        // 'bitfinex': require('./exchanges/bitfinex'),
+        'kraken': require('./exchanges/kraken'),
+        'coins-e': require('./exchanges/coins-e')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -64,12 +64,11 @@ module.exports = {
 
                     //escaping the setInterval
                     if (result.length) {
-                        clearInterval(interval);
-
                         arb = self.getBestArb(result);
 
                         if (arb) {
                             self.makeTrade(arb);
+                            clearInterval(interval);
                         }
                         else {
                             self.canLookForPrices = true;
