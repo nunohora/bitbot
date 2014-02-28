@@ -95,8 +95,6 @@ module.exports = {
                 self.prices.sell.price = _.first(data.bids)[0];
                 self.prices.sell.quantity = _.first(data.bids)[1];
 
-                console.log(self.prices);
-                
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {

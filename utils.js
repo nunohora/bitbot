@@ -34,10 +34,9 @@ module.exports = {
             amount = (amount / (1 - fee));
             cost = amount * price;
         }
-
         else if (currency === alt) {
-            potentialCost = amount *  price;
-            cost = potentialCost + (potentialCost * fee);
+            amount = amount *  price;
+            cost = amount + (amount * fee);
         }
 
         return {

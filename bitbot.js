@@ -11,14 +11,14 @@ module.exports = {
     canLookForPrices: true,
 
     exchangeMarkets: {
-        'cryptsy': require('./exchanges/cryptsy'),
+        // 'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'bter': require('./exchanges/bter'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
-        // 'bitfinex': require('./exchanges/bitfinex'),
-        'kraken': require('./exchanges/kraken'),
-        'coins-e': require('./exchanges/coins-e')
+        'bitfinex': require('./exchanges/bitfinex'),
+        'kraken': require('./exchanges/kraken')
+        // 'coins-e': require('./exchanges/coins-e')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -114,7 +114,7 @@ module.exports = {
 
         console.log('&&&&&&&&&&&&&&&'.yellow);
         console.log('Balance to buy: '.yellow, balanceToBuy);
-        console.log('Required balance to buy: '.yellow, ex1.buy);
+        console.log('Required balance to buy: '.yellow, (ex1.buy * ex1.amount));
         console.log('Enough balance to buy?: '.yellow, balanceToBuy > (ex1.buy * ex1.amount));
         console.log('Balance to sell: '.yellow, balanceToSell);
         console.log('Required balance to sell: '.yellow, ex2.amount);

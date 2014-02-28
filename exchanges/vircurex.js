@@ -81,10 +81,6 @@ module.exports = {
         amount = 0;
         
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
-            console.log('Vircurex create order data: ');
-            console.log('error: ', err);
-            console.log('data: ', data);
-
             if (!err) {
                 when(self._releaseOrder(data.orderid)).then(function (response) {
                     console.log('VIRCUREX RELEASE ORDER RESPONSE', response);
@@ -95,6 +91,7 @@ module.exports = {
                 });
             }
             else {
+                console.log(err);
                 deferred.reject(err);
             }
         });
@@ -106,13 +103,11 @@ module.exports = {
         var deferred = new Deferred();
 
         vircurex.releaseOrder(orderId, function (err, data) {
-            console.log('Vircurex release order data: ');
-            console.log('error: ', err);
-            console.log('data: ', data);
             if (!err) {
                 deferred.resolve(data);
             }
             else {
+                console.log(err);
                 deferred.reject(err);
             }
         });

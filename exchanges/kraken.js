@@ -16,7 +16,8 @@ module.exports = {
     prices: {},
 
     balancesMap: {
-        'XXBT': 'btc'
+        'XXBT': 'btc',
+        'XLTC': 'ltc'
     },
 
     getBalance: function () {
