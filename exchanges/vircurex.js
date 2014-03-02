@@ -78,7 +78,7 @@ module.exports = {
 
         this.orderType = type;
 
-        amount = 0;
+        // amount = 0;
         
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
             if (!err) {

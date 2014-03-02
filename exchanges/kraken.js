@@ -39,8 +39,12 @@ module.exports = {
                 console.log('Error when checking balance for '.red + self.exchangeName);
             }
 
-            deferred.resolve();
+            try {deferred.resolve();} catch (e) {}
         });
+
+        setTimeout(function () {
+            try { deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
@@ -131,8 +135,12 @@ module.exports = {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
             }
 
-            deferred.resolve();
+            try {deferred.resolve();} catch (e){}
         });
+
+        setTimeout(function () {
+            try {deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
@@ -146,12 +154,16 @@ module.exports = {
             console.log('BTCE ORDER DATA: ', data);
 
             if (!err && data.error === 'no orders') {
-                deferred.resolve(true);
+                try {deferred.resolve(true);} catch (e){}
             }
             else {
-                deferred.resolve(false);
+                try {deferred.resolve(false);} catch (e){}
             }
         });
+
+        setTimeout(function () {
+            try { deferred.resolve(false);} catch (e){}
+        }, config.requestTimeouts.orderStatus);
 
         return deferred.promise;
     }
