@@ -1,24 +1,19 @@
-var colors          = require('colors'),
-    _               = require('underscore'),
-    Deferred        = require("promised-io/promise").Deferred,
-    config          = require('./../config'),
-    utils           = require('../utils'),
-    KrakenClient    = require('kraken-api');
+var colors      = require('colors'),
+    _           = require('underscore'),
+    Deferred    = require("promised-io/promise").Deferred,
+    config      = require('./../config'),
+    CoinEX        = require('../coinex'),
+    utils       = require('../utils');
 
-var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret);
+var coinex = new CoinEX(config['coinex'].apiKey, config['coinex'].secret);
 
 module.exports = {
 
-    exchangeName: 'kraken',
+    exchangeName: 'coinex',
 
     balances: {},
 
     prices: {},
-
-    balancesMap: {
-        'XXBT': 'btc',
-        'XLTC': 'ltc'
-    },
 
     getBalance: function () {
         var deferred = new Deferred(),
@@ -26,16 +21,15 @@ module.exports = {
 
         this.balances = {};
         
-        kraken.api('Balance', null, function (err, data) {
+        coinex.getInfo(function (err, data) {
             if (!err) {
-                _.each(data.result, function (balance, idx) {
-                    self.balances[self.balancesMap[idx]] = +balance;
+                _.each(data.balances, function (balance) {
+                    self.balances[balance['currency_name'].toLowerCase()] = balance['amount'];
                 });
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
-                console.log(err);
                 console.log('Error when checking balance for '.red + self.exchangeName);
             }
 
@@ -52,33 +46,16 @@ module.exports = {
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred();
 
-        //ugly ugly
-        if (config.market === 'LTC_BTC') {
-            type = type === 'buy' ? 'sell' : 'buy';
-            rate = (1/rate).toFixed(5);
-        }
-
-        console.log('KRAKEN TEST!!!!!');
-        console.log('market: ', market);
-        console.log('type: ', type);
-        console.log('rate: ', rate);
-        console.log('amount: ', amount);
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         amount = 0;
 
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        kraken.api('AddOrder', {
+        coinex.trade({
             pair: config[this.exchangeName].marketMap[market],
             type: type,
-            ordertype: 'limit',
             rate: rate,
             amount: amount
         }, function (err, data) {
-            console.log('KRAKEN ORDER RESPONSE!!');
-            console.log('err: ', err);
-            console.log('data: ', data);
-
             if (!err && data.success === 1) {
                 deferred.resolve(true);
             }
@@ -103,7 +80,11 @@ module.exports = {
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
-            self = this;
+            self = this,
+            bids = [],
+            asks = [],
+            bid,
+            ask;
 
         this.prices = {
             buy: {},
@@ -112,21 +93,27 @@ module.exports = {
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        kraken.api('Depth', {'pair': market, 'count': 10}, function (err, data) {
-
+        coinex.depth({pair: market}, function (err, data) {
             if (!err) {
-                var resultMarket = _.keys(data.result),
-                    tempData = data.result[resultMarket];
+                _.each(data['orders'], function (openOrder) {
+                    if (openOrder['bid']) {
+                        bids.push(openOrder);
+                    }
+                    else {
+                        asks.push(openOrder);
+                    }
+                }, this);
 
-                //ugly, but will do for now
-                if (config.market === 'LTC_BTC') {
-                    self.prices.sell.price = (1/_.first(tempData.asks)[0]).toFixed(5);
-                    self.prices.sell.quantity = (_.first(tempData.asks)[1] * _.first(tempData.asks)[0]).toFixed(8);
+                ask = _.min(asks, function (ask) {return ask.rate;});
+                bid = _.max(bids, function (bid) {return bid.rate;});
 
-                    self.prices.buy.price = (1/_.first(tempData.bids)[0]).toFixed(5);
-                    self.prices.buy.quantity = (_.first(tempData.bids)[1] * _.first(tempData.bids)[0]).toFixed(8);
-                }
+                self.prices.buy.price = (ask['rate']/100000000).toFixed(8);
+                self.prices.buy.quantity = (ask['amount']/100000000).toFixed(8);
 
+                self.prices.sell.price = (bid['rate']/100000000).toFixed(8);
+                self.prices.sell.quantity = (bid['amount']/100000000).toFixed(8);
+
+                console.log('prices');
                 console.log(self.prices);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
@@ -135,13 +122,13 @@ module.exports = {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
             }
 
-            try {deferred.resolve();} catch (e){}
+            try {deferred.resolve();} catch (e) {}
         });
 
         setTimeout(function () {
             try {deferred.resolve();} catch (e){}
         }, config.requestTimeouts.prices);
-
+        
         return deferred.promise;
     },
 
@@ -150,14 +137,14 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        btceTrade.activeOrders({pair: market}, function (err, data) {
-            console.log('KRAKEN ORDER DATA: ', data);
+        coinex.activeOrders({pair: market}, function (err, data) {
+            console.log('coinex ORDER DATA: ', data);
 
             if (!err && data.error === 'no orders') {
-                try {deferred.resolve(true);} catch (e){}
+                try { deferred.resolve(true);} catch (e){}
             }
             else {
-                try {deferred.resolve(false);} catch (e){}
+                try { deferred.resolve(false);} catch (e){}
             }
         });
 
@@ -167,4 +154,5 @@ module.exports = {
 
         return deferred.promise;
     }
+
 };

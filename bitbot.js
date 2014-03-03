@@ -12,13 +12,14 @@ module.exports = {
 
     exchangeMarkets: {
         // 'cryptsy': require('./exchanges/cryptsy'),
-        // 'vircurex': require('./exchanges/vircurex'),
+        'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'bter': require('./exchanges/bter'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
-        'bitfinex': require('./exchanges/bitfinex'),
+        // 'bitfinex': require('./exchanges/bitfinex')
         'kraken': require('./exchanges/kraken'),
-        'coins-e': require('./exchanges/coins-e')
+        'coins-e': require('./exchanges/coins-e'),
+        'coinex': require('./exchanges/coinex')
     },
 
 	start: function (marketName, tradeAmount) {
@@ -168,7 +169,7 @@ module.exports = {
 
                         self.canLookForPrices = true;
 
-                        // self.start(config.market, config.tradeAmount);
+                        self.start(config.market, config.tradeAmount);
                     }
                     else {
                         console.log('Orders not filled yet... :('.red);
