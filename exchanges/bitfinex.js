@@ -54,7 +54,7 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
+        amount = 0;
         
         bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data, orderId) {
             console.log('orderId:', JSON.parse(orderId)['order_id']);
@@ -125,10 +125,7 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market];
 
         bitfinex.active_orders(function (err, data) {
-            console.log('Bitfinex ORDER DATA: ', JSON.parse(data.body));
-            console.log('err: ', err);
-
-            if (!err && data.error === 'no orders') {
+            if (!err && !JSON.parse(data.body)) {
                 try { deferred.resolve(true);} catch (e){}
             }
             else {
