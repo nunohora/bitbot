@@ -15,6 +15,8 @@ module.exports = {
 
     prices: {},
 
+    hasOpenOrder: false,
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -56,6 +58,8 @@ module.exports = {
 
         amount = 0;
         
+        this.hasOpenOrder = true;
+
         bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data, orderId) {
             console.log('orderId:', JSON.parse(orderId)['order_id']);
             
@@ -126,7 +130,11 @@ module.exports = {
 
         bitfinex.active_orders(function (err, data) {
             if (!err && !JSON.parse(data.body)) {
-                try { deferred.resolve(true);} catch (e){}
+                try {
+                    self.hasOpenOrder = false;
+
+                    deferred.resolve(true);
+                } catch (e){}
             }
             else {
                 try { deferred.resolve(false);} catch (e){}

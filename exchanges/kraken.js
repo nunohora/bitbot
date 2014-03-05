@@ -20,6 +20,8 @@ module.exports = {
         'XLTC': 'ltc'
     },
 
+    hasOpenOrder: false,
+    
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -63,6 +65,8 @@ module.exports = {
         console.log('type: ', type);
         console.log('rate: ', rate);
         console.log('amount: ', amount);
+
+        this.hasOpenOrder = true;
 
         amount = 0;
 
@@ -154,7 +158,11 @@ module.exports = {
             console.log('KRAKEN ORDER DATA: ', data);
 
             if (!err && data.error === 'no orders') {
-                try {deferred.resolve(true);} catch (e){}
+                try {
+                    self.hasOpenOrder = false;
+
+                    deferred.resolve(true);
+                } catch (e){}
             }
             else {
                 try {deferred.resolve(false);} catch (e){}

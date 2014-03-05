@@ -17,6 +17,8 @@ module.exports = {
 
     openOrderId: null,
 
+    hasOpenOrder: false,
+    
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -52,6 +54,8 @@ module.exports = {
         
         amount = 0;
         
+        this.hasOpenOrder = true;
+
         client.createorder(marketId, type, amount, rate, function (err, data) {
             if (!err && data.success === '1') {
                 self.openOrderId = +data.orderid;
@@ -124,7 +128,11 @@ module.exports = {
 
             if (!err && !data.return) {
                 self.openOrderId = null;
-                try { deferred.resolve(false);} catch (e){}
+                try {
+                    self.hasOpenOrder = false;
+                    
+                    deferred.resolve(false);
+                } catch (e){}
             }
             else {
                 try { deferred.resolve(false);} catch (e){}

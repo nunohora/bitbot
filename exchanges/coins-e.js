@@ -15,6 +15,8 @@ module.exports = {
 
     prices: {},
 
+    hasOpenOrder: false,
+    
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -48,6 +50,8 @@ module.exports = {
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         amount = 0;
+
+        this.hasOpenOrder = true;
 
         coinse.trade({
             pair: config[this.exchangeName].marketMap[market],
@@ -124,7 +128,11 @@ module.exports = {
             console.log('COINS-E ORDER DATA: ', data);
 
             if (!err && data.error === 'no orders') {
-                try { deferred.resolve(true);} catch (e){}
+                try {
+                    self.hasOpenOrder = false;
+                    
+                    deferred.resolve(true);
+                } catch (e){}
             }
             else {
                 try { deferred.resolve(false);} catch (e){}

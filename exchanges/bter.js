@@ -15,6 +15,8 @@ module.exports = {
 
     prices: {},
 
+    hasOpenOrder: false,
+
     getBalance: function () {
         var deferred = new Deferred(),
             self = this;
@@ -46,6 +48,8 @@ module.exports = {
         var deferred = new Deferred();
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
+
+        this.hasOpenOrder = true;
 
         bter.trade({
             pair: market.toLowerCase(),
@@ -129,7 +133,13 @@ module.exports = {
 
             result = !err && _.isEmpty(data.orders);
 
-            try {deferred.resolve(result);} catch (e) {}
+            if (result) {
+                self.hasOpenOrder = true;
+            }
+
+            try {
+                deferred.resolve(result);
+            } catch (e) {}
         });
 
         setTimeout(function () {

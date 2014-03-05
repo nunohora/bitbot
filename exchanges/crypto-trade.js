@@ -17,6 +17,8 @@ module.exports = {
 
     openOrderId: null,
 
+    hasOpenOrder: false,
+
     getBalance: function (type) {
         var deferred = new Deferred(),
             self = this;
@@ -52,6 +54,8 @@ module.exports = {
 
         amount = 0;
         
+        this.hasOpenOrder = true;
+
         cryptoTrade.trade({
             pair: market.toLowerCase(),
             type: type.charAt(0).toUpperCase() + type.slice(1),
@@ -127,13 +131,17 @@ module.exports = {
 
                 if (!err) {
                     if (!self.openOrderId) {
+                        self.hasOpenOrder = false;
+
                         try { deferred.resolve(true);} catch (e){}
                     }
                     else if (data.data) {
                         try { deferred.resolve(false);} catch (e){}
                     }
                     else {
+                        this.hasOpenOrder = false;
                         self.openOrderId = null;
+
                         try { deferred.resolve(true);} catch (e){}
                     }
                 }
