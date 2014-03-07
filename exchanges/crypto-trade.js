@@ -120,40 +120,23 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval;
 
+        var checkOrderStatus = function () {
             cryptoTrade.orderInfo({orderid: self.openOrderId}, function (err, data) {
                 console.log('CryptoTrade ORDER DATA');
                 console.log(data);
 
-                if (!err) {
-                    if (!self.openOrderId) {
-                        self.hasOpenOrder = false;
+                if (!err && (!self.openOrderId || !data.data)) {
+                    self.hasOpenOrder = false;
 
-                        try { deferred.resolve(true);} catch (e){}
-                    }
-                    else if (data.data) {
-                        try { deferred.resolve(false);} catch (e){}
-                    }
-                    else {
-                        this.hasOpenOrder = false;
-                        self.openOrderId = null;
-
-                        try { deferred.resolve(true);} catch (e){}
-                    }
-                }
-                else {
-                    try { deferred.resolve(false);} catch (e){}
+                    clearInterval(interval);
                 }
             });
+        };
 
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
+        interval = setInterval(this.checkOrderStatus, config.interval);
     }
 };

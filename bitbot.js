@@ -11,12 +11,12 @@ module.exports = {
     canLookForPrices: true,
 
     exchangeMarkets: {
-        // 'cryptsy': require('./exchanges/cryptsy'),
-        // 'vircurex': require('./exchangees/vircurex'),
-        // 'btce': require('./exchanges/btce'),
-        // 'bter': require('./exchanges/bter'),
-        // 'crypto-trade': require('./exchanges/crypto-trade'),
-        // 'bitfinex': require('./exchanges/bitfinex'),
+        'cryptsy': require('./exchanges/cryptsy'),
+        'vircurex': require('./exchanges/vircurex'),
+        'btce': require('./exchanges/btce'),
+        'bter': require('./exchanges/bter'),
+        'crypto-trade': require('./exchanges/crypto-trade'),
+        'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
         'coins-e': require('./exchanges/coins-e'),
         'coinex': require('./exchanges/coinex')
@@ -29,17 +29,18 @@ module.exports = {
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
-        console.log("starting bot");
+        this.checkOrderStatuses('btce', 'vircurex');
+        // promises = _.map(this.exchangeMarkets, function (exchange) {
+        //     if (!exchange.hasOpenOrders) {
+        //         return exchange.getBalance();
+        //     }
+        // }, this);
 
-        promises = _.map(this.exchangeMarkets, function (exchange) {
-            return exchange.getBalance();
-        }, this);
+        // all(promises).then(function () {
+        //     console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
 
-        all(promises).then(function () {
-            console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
-
-            self.startLookingAtPrices();
-        });
+        //     self.startLookingAtPrices();
+        // });
     },
 
     startLookingAtPrices: function () {
@@ -60,7 +61,7 @@ module.exports = {
                     if (!exchange.hasOpenOrders) {
                         return exchange.getExchangeInfo();
                     }
-                    
+
                 }, this);
 
                 var group = all(promises).then(function () {
@@ -138,8 +139,6 @@ module.exports = {
     },
 
     makeTrade: function (arb) {
-        console.log(arb);
-
         var self = this,
             ex1 = arb.ex1,
             ex2 = arb.ex2;
@@ -155,37 +154,12 @@ module.exports = {
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
-        var self = this,
-            interval,
-            isCheckingForStatus = false;
+        this.exchangeMarkets[ex1Name].startOrderCheckLoop();
+        this.exchangeMarkets[ex2Name].startOrderCheckLoop();
 
-        function checkStatuses() {
-            if (!isCheckingForStatus) {
-                isCheckingForStatus = true;
+        this.canLookForPrices = true;
 
-                var group = all(self.exchangeMarkets[ex1Name].checkOrderStatus(),
-                self.exchangeMarkets[ex2Name].checkOrderStatus()
-                ).then(function (response) {
-                    console.log('check status response: ', response);
-
-                    if (response[0] && response[1]) {
-                        console.log('Orders filled successfully!!!'.green);
-                        clearInterval(interval);
-
-                        self.canLookForPrices = true;
-
-                        self.start(config.market, config.tradeAmount);
-                    }
-                    else {
-                        console.log('Orders not filled yet... :('.red);
-                    }
-
-                    isCheckingForStatus = false;
-                });
-            }
-        }
-
-        interval = setInterval(checkStatuses, config.interval);
+        // this.start(config.market, config.tradeAmount);
     },
 
     calculateArbOpportunity: function () {
@@ -247,7 +221,6 @@ module.exports = {
         finalProfit = (profit.profit - cost.cost).toFixed(8);
 
         if (finalProfit > 0) {
-
             console.log("\007");
             console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
             console.log('Buy: '.green, cost.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.prices.buy.price + ' in '.green + ex1.exchangeName);

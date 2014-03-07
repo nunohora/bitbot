@@ -156,30 +156,22 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this;
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval;
 
-        vircurex.readOrders(1, function (err, data) {
-            console.log('Vircurex ORDER DATA');
-            console.log(data);
+        var checkOrderStatus = function () {
+            vircurex.readOrders(1, function (err, data) {
+                console.log('Vircurex ORDER DATA');
+                console.log(data);
 
-            if (!err && data.numberorders === 0) {
-                try {
+                if (!err && data.numberorders === 0) {
                     self.hasOpenOrder = false;
-                    
-                    deferred.resolve(true);
-                } catch (e){}
-            }
-            else {
-                try { deferred.resolve(false);} catch (e){}
-            }
-        });
+                    clearInterval(interval);
+                }
+            });
+        };
 
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
+        interval = setInterval(checkOrderStatus, config.interval);
     }
 };

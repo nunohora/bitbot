@@ -117,9 +117,13 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this,
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval = setInterval(self.checkOrderStatus(this), config.interval);
+    },
+
+    checkOrderStatus: function (interval) {
+        var self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         client.myorders(market, function (err, data) {
@@ -128,21 +132,10 @@ module.exports = {
 
             if (!err && !data.return) {
                 self.openOrderId = null;
-                try {
-                    self.hasOpenOrder = false;
-                    
-                    deferred.resolve(false);
-                } catch (e){}
-            }
-            else {
-                try { deferred.resolve(false);} catch (e){}
+                
+                self.hasOpenOrder = false;
+                clearInterval(interval);
             }
         });
-
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
-    }
+    }    
 };

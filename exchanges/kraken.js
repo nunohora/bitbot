@@ -149,30 +149,20 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval = setInterval(self.checkOrderStatus(this), config.interval);
+    },
 
-        btceTrade.activeOrders({pair: market}, function (err, data) {
-            console.log('KRAKEN ORDER DATA: ', data);
+    checkOrderStatus: function (interval) {
+        var self = this;
 
-            if (!err && data.error === 'no orders') {
-                try {
-                    self.hasOpenOrder = false;
-
-                    deferred.resolve(true);
-                } catch (e){}
-            }
-            else {
-                try {deferred.resolve(false);} catch (e){}
+        kraken.api('OpenOrders', null, function (err, data) {
+            console.log('KRAKEN OPEN ORDERS: ', data);
+            if (!err) {
+                // self.hasOpenOrder = false;
+                // clearInterval(interval);
             }
         });
-
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
     }
 };

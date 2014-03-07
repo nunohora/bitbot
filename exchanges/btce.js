@@ -115,31 +115,24 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval;
 
-        btceTrade.activeOrders({pair: market}, function (err, data) {
-            console.log('BTCE ORDER DATA: ', data);
+        var checkOrderStatus = function () {
+            var deferred = new Deferred(),
+                market = config[self.exchangeName].marketMap[config.market];
 
-            if (!err && data.error === 'no orders') {
-                try {
+            btceTrade.activeOrders({pair: market}, function (err, data) {
+                console.log('BTCE ORDER DATA: ', data);
+
+                if (!err && data.error === 'no orders') {
                     self.hasOpenOrder = false;
+                    clearInterval(interval);
+                }
+            });
+        };
 
-                    deferred.resolve(true);
-                } catch (e){}
-            }
-            else {
-                try { deferred.resolve(false);} catch (e){}
-            }
-        });
-
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
+        interval = setInterval(checkOrderStatus, config.interval);
     }
-
 };

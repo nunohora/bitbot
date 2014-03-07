@@ -136,31 +136,21 @@ module.exports = {
         return deferred.promise;
     },
 
-    checkOrderStatus: function () {
-        var deferred = new Deferred(),
-            self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+    startOrderCheckLoop: function () {
+        var self = this,
+            interval;
 
-        coinex.activeOrders({pair: market}, function (err, data) {
-            console.log('coinex ORDER DATA: ', data);
+        var checkOrderStatus = function (interval) {
+            var market = config[self.exchangeName].marketMap[config.market];
 
-            if (!err && data.error === 'no orders') {
-                try {
+            coinex.activeOrders({pair: market}, function (err, data) {
+                if (!err && data.error === 'no orders') {
                     self.hasOpenOrder = false;
+                    clearInterval(interval);
+                }
+            });
+        };
 
-                    deferred.resolve(true);
-                } catch (e){}
-            }
-            else {
-                try { deferred.resolve(false);} catch (e){}
-            }
-        });
-
-        setTimeout(function () {
-            try { deferred.resolve(false);} catch (e){}
-        }, config.requestTimeouts.orderStatus);
-
-        return deferred.promise;
+        interval = setInterval(self.checkOrderStatus, config.interval);
     }
-
 };
