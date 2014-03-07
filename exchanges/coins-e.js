@@ -28,6 +28,9 @@ module.exports = {
                 _.each(data.wallets, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance.a;
                 }, self);
+
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -100,7 +103,6 @@ module.exports = {
                 self.prices.sell.price = _.first(data.marketdepth.bids)['r'];
                 self.prices.sell.quantity = _.first(data.marketdepth.bids)['q'];
 
-                console.log(self.prices);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {
@@ -130,7 +132,8 @@ module.exports = {
                 console.log('COINS-E ORDER DATA: ', data);
 
                 if (!err && data.error === 'no orders') {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
+                    
                     clearInterval(interval);
                 }
             });

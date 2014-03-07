@@ -26,6 +26,9 @@ module.exports = {
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
+
+                self.hasOpenOrder = false;
+                
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -127,7 +130,8 @@ module.exports = {
                 console.log('BTCE ORDER DATA: ', data);
 
                 if (!err && data.error === 'no orders') {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
+
                     clearInterval(interval);
                 }
             });

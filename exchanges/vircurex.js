@@ -39,7 +39,9 @@ module.exports = {
                 _.each(data.balances, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance.availablebalance;
                 });
-                
+                    
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -166,7 +168,8 @@ module.exports = {
                 console.log(data);
 
                 if (!err && data.numberorders === 0) {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
+                    
                     clearInterval(interval);
                 }
             });

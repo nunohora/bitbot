@@ -33,6 +33,8 @@ module.exports = {
                     }
                 }, self);
 
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -133,7 +135,8 @@ module.exports = {
                 
             bitfinex.active_orders(function (err, data) {
                 if (!err && !JSON.parse(data.body)) {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
+
                     clearInterval(interval);
                 }
             });

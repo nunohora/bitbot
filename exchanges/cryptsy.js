@@ -30,6 +30,9 @@ module.exports = {
                 _.each(data.return.balances_available, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 });
+
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -119,23 +122,25 @@ module.exports = {
 
     startOrderCheckLoop: function () {
         var self = this,
-            interval = setInterval(self.checkOrderStatus(this), config.interval);
-    },
+            interval;
 
-    checkOrderStatus: function (interval) {
-        var self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+        checkOrderStatus = function () {
+            var market = config[self.exchangeName].marketMap[config.market];
 
-        client.myorders(market, function (err, data) {
-            console.log('CRYPTSY ORDER DATA');
-            console.log(data);
+            client.myorders(market, function (err, data) {
+                console.log('CRYPTSY ORDER DATA');
+                console.log(data);
 
-            if (!err && !data.return) {
-                self.openOrderId = null;
-                
-                self.hasOpenOrder = false;
-                clearInterval(interval);
-            }
-        });
-    }    
+                if (!err && !data.return) {
+                    self.openOrderId = null;
+                    
+                    self.getBalance();
+                    
+                    clearInterval(interval);
+                }
+            });
+        };
+
+        interval = setInterval(self.checkOrderStatus, config.interval);
+    }
 };

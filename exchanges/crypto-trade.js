@@ -30,6 +30,9 @@ module.exports = {
                 _.each(data.data.funds, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance;
                 }, self);
+
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -130,7 +133,7 @@ module.exports = {
                 console.log(data);
 
                 if (!err && (!self.openOrderId || !data.data)) {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
 
                     clearInterval(interval);
                 }

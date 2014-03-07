@@ -100,7 +100,6 @@ CryptoTrade.prototype.query = function(method, params, callback) {
       data+= chunk;
     });
     res.on('end', function() {
-      console.log('CryptoTrade Data: ', data);
       if (data.indexOf('<') !== -1) {
         callback(true, null);
       }

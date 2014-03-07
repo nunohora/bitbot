@@ -26,8 +26,10 @@ module.exports = {
         coinex.getInfo(function (err, data) {
             if (!err) {
                 _.each(data.balances, function (balance) {
-                    self.balances[balance['currency_name'].toLowerCase()] = balance['amount'];
+                    self.balances[balance['currency_name'].toLowerCase()] = +(balance['amount']/100000000).toFixed(8);
                 });
+
+                self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -117,9 +119,6 @@ module.exports = {
                 self.prices.sell.price = (bid['rate']/100000000).toFixed(8);
                 self.prices.sell.quantity = (bid['amount']/100000000).toFixed(8);
 
-                console.log('prices');
-                console.log(self.prices);
-
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {
@@ -145,7 +144,8 @@ module.exports = {
 
             coinex.activeOrders({pair: market}, function (err, data) {
                 if (!err && data.error === 'no orders') {
-                    self.hasOpenOrder = false;
+                    self.getBalance();
+
                     clearInterval(interval);
                 }
             });

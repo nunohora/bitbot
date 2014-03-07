@@ -14,8 +14,7 @@ module.exports = {
         'cryptsy': require('./exchanges/cryptsy'),
         'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        'bter': require('./exchanges/bter'),
-        'crypto-trade': require('./exchanges/crypto-trade'),
+        // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
         'coins-e': require('./exchanges/coins-e'),
@@ -29,18 +28,17 @@ module.exports = {
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
-        this.checkOrderStatuses('btce', 'vircurex');
-        // promises = _.map(this.exchangeMarkets, function (exchange) {
-        //     if (!exchange.hasOpenOrders) {
-        //         return exchange.getBalance();
-        //     }
-        // }, this);
+        promises = _.map(this.exchangeMarkets, function (exchange) {
+            if (!exchange.hasOpenOrders) {
+                return exchange.getBalance();
+            }
+        }, this);
 
-        // all(promises).then(function () {
-        //     console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
+        all(promises).then(function () {
+            console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
 
-        //     self.startLookingAtPrices();
-        // });
+            self.startLookingAtPrices();
+        });
     },
 
     startLookingAtPrices: function () {

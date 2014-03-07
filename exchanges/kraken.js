@@ -34,6 +34,8 @@ module.exports = {
                     self.balances[self.balancesMap[idx]] = +balance;
                 });
 
+                self.hasOpenOrder = false;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -52,19 +54,25 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            newRate,
+            newType,
+            newAmount;
+
+        console.log('Old Rate: ', rate);
+        console.log('Old amount: ', amount);
 
         //ugly ugly
         if (config.market === 'LTC_BTC') {
             type = type === 'buy' ? 'sell' : 'buy';
-            rate = (1/rate).toFixed(5);
+            newRate = (1/rate).toFixed(5);
+            
+            newAmount = (amount/newRate).toFixed(8);
         }
 
         console.log('KRAKEN TEST!!!!!');
-        console.log('market: ', market);
-        console.log('type: ', type);
-        console.log('rate: ', rate);
-        console.log('amount: ', amount);
+        console.log('New Rate: ', newRate);
+        console.log('new amount: ', newAmount);
 
         this.hasOpenOrder = true;
 
@@ -74,9 +82,9 @@ module.exports = {
 
         kraken.api('AddOrder', {
             pair: config[this.exchangeName].marketMap[market],
-            type: type,
+            type: newType,
             ordertype: 'limit',
-            rate: rate,
+            rate: newRate,
             amount: amount
         }, function (err, data) {
             console.log('KRAKEN ORDER RESPONSE!!');
@@ -117,21 +125,18 @@ module.exports = {
         console.log('Checking prices for '.yellow + this.exchangeName);
 
         kraken.api('Depth', {'pair': market, 'count': 10}, function (err, data) {
-
             if (!err) {
                 var resultMarket = _.keys(data.result),
                     tempData = data.result[resultMarket];
 
                 //ugly, but will do for now
                 if (config.market === 'LTC_BTC') {
-                    self.prices.sell.price = (1/_.first(tempData.asks)[0]).toFixed(5);
+                    self.prices.sell.price = (1/_.first(tempData.asks)[0]);
                     self.prices.sell.quantity = (_.first(tempData.asks)[1] * _.first(tempData.asks)[0]).toFixed(8);
 
-                    self.prices.buy.price = (1/_.first(tempData.bids)[0]).toFixed(5);
+                    self.prices.buy.price = (1/_.first(tempData.bids)[0]);
                     self.prices.buy.quantity = (_.first(tempData.bids)[1] * _.first(tempData.bids)[0]).toFixed(8);
                 }
-
-                console.log(self.prices);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
@@ -151,18 +156,18 @@ module.exports = {
 
     startOrderCheckLoop: function () {
         var self = this,
-            interval = setInterval(self.checkOrderStatus(this), config.interval);
-    },
+            interval;
 
-    checkOrderStatus: function (interval) {
-        var self = this;
-
-        kraken.api('OpenOrders', null, function (err, data) {
-            console.log('KRAKEN OPEN ORDERS: ', data);
-            if (!err) {
-                // self.hasOpenOrder = false;
-                // clearInterval(interval);
-            }
-        });
+        checkOrderStatus = function () {
+            kraken.api('OpenOrders', null, function (err, data) {
+                console.log('KRAKEN OPEN ORDERS: ', data);
+                if (!err) {
+                    // self.hasOpenOrder = false;
+                    // clearInterval(interval);
+                }
+            });
+        };
+        
+        interval = setInterval(self.checkOrderStatus, config.interval);
     }
 };
