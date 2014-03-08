@@ -45,9 +45,11 @@ CoinEX.prototype.activeOrders = function(params, callback) {
 };
 
 CoinEX.prototype.trade = function(params, callback) {
-  var urlSuffix = 'market/' + params['pair'] + '/';
+  var urlSuffix = 'orders';
 
-  this.query('neworder', params, callback, urlSuffix);
+  console.log('coinex params:', params);
+  console.log(urlSuffix);
+  this.query('neworder', params, callback, urlSuffix, 'POST');
 };
 
 CoinEX.prototype.cancelOrder = function(orderId, callback) {
@@ -103,11 +105,12 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
       data+= chunk;
     });
     res.on('end', function() {
-      console.log(data);
       try {
         callback(false, JSON.parse(data));
       }
       catch (e) {
+        console.log('failure!');
+        console.log(e);
         callback(true, null);
       }
     });

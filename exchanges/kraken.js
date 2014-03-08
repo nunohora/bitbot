@@ -157,9 +157,9 @@ module.exports = {
         checkOrderStatus = function () {
             kraken.api('OpenOrders', null, function (err, data) {
                 console.log('KRAKEN OPEN ORDERS: ', data);
-                if (!err) {
-                    // self.hasOpenOrder = false;
-                    // clearInterval(interval);
+                if (!err && !data) {
+                    self.hasOpenOrder = false;
+                    clearInterval(interval);
                 }
             });
         };

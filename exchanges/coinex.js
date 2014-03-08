@@ -62,10 +62,12 @@ module.exports = {
             rate: rate * 100000000,
             amount: amount * 100000000
         }, function (err, data) {
+            console.log('COINEX DATA:, ', data);
             if (!err && data.success === 1) {
                 deferred.resolve(true);
             }
             else {
+                console.log(err);
                 deferred.resolve(false);
             }
         });
@@ -143,6 +145,7 @@ module.exports = {
             var market = config[self.exchangeName].marketMap[config.market];
 
             coinex.activeOrders({pair: market}, function (err, data) {
+                console.log('COINEX DATA ORDER:, ', data);
                 if (!err && data.error === 'no orders') {
                     self.getBalance();
 

@@ -12,7 +12,7 @@ module.exports = {
 
     exchangeMarkets: {
         // 'cryptsy': require('./exchanges/cryptsy'),
-        // 'vircurex': require('./exchanges/vircurex'),
+        'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
@@ -141,17 +141,30 @@ module.exports = {
             ex1 = arb.ex1,
             ex2 = arb.ex2;
 
+        console.log("\007");
+        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.exchangeName);
+        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.exchangeName);
+        // console.log('Profit: '.green + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
+        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+
         var group = all(
             self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
             self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
         ).then(function (response) {
             if (response[0] && response[1]) {
+                console.log('trade response!');
+                console.log(response[0]);
+                console.log(response[1]);
                 self.checkOrderStatuses(ex1.name, ex2.name);
             }
         });
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
+        console.log('checking exchanges statuses');
+        console.log(ex1Name);
+        console.log(ex2Name);
         console.log('checking exchanges statuses');
         this.exchangeMarkets[ex1Name].startOrderCheckLoop();
         this.exchangeMarkets[ex2Name].startOrderCheckLoop();
@@ -220,13 +233,6 @@ module.exports = {
         finalProfit = (profit.profit - cost.cost).toFixed(8);
 
         if (finalProfit > 0) {
-            console.log("\007");
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-            console.log('Buy: '.green, cost.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.prices.buy.price + ' in '.green + ex1.exchangeName);
-            console.log('Sell: '.green, profit.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.prices.sell.price + ' in '.green + ex2.exchangeName);
-            console.log('Profit: '.green + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
-            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-
             return {
                 ex1: {
                     name: ex1.exchangeName,

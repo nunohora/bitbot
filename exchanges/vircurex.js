@@ -162,12 +162,15 @@ module.exports = {
         var self = this,
             interval;
 
+        console.log('chegou aqui');
+
         var checkOrderStatus = function () {
             vircurex.readOrders(1, function (err, data) {
                 console.log('Vircurex ORDER DATA');
                 console.log(data);
 
                 if (!err && data.numberorders === 0) {
+                    console.log('VIRCUREX ORDER CLEARED!');
                     self.getBalance();
                     
                     clearInterval(interval);
