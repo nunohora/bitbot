@@ -52,15 +52,15 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        amount = 0;
+        // amount = 0;
 
         this.hasOpenOrder = true;
 
         coinex.trade({
-            pair: config[this.exchangeName].marketMap[market],
-            type: type,
-            rate: rate,
-            amount: amount
+            trade_pair_id: config[this.exchangeName].marketMap[market],
+            bid: type === 'buy' ? true : false,
+            rate: rate * 100000000,
+            amount: amount * 100000000
         }, function (err, data) {
             if (!err && data.success === 1) {
                 deferred.resolve(true);
@@ -151,6 +151,6 @@ module.exports = {
             });
         };
 
-        interval = setInterval(self.checkOrderStatus, config.interval);
+        interval = setInterval(checkOrderStatus, config.interval);
     }
 };

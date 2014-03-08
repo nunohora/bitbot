@@ -64,19 +64,13 @@ module.exports = {
 
         //ugly ugly
         if (config.market === 'LTC_BTC') {
-            type = type === 'buy' ? 'sell' : 'buy';
+            newType = type === 'buy' ? 'sell' : 'buy';
             newRate = (1/rate).toFixed(5);
             
             newAmount = (amount/newRate).toFixed(8);
         }
 
-        console.log('KRAKEN TEST!!!!!');
-        console.log('New Rate: ', newRate);
-        console.log('new amount: ', newAmount);
-
         this.hasOpenOrder = true;
-
-        amount = 0;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
@@ -84,17 +78,19 @@ module.exports = {
             pair: config[this.exchangeName].marketMap[market],
             type: newType,
             ordertype: 'limit',
-            rate: newRate,
-            amount: amount
+            price: newRate,
+            volume: newAmount
         }, function (err, data) {
             console.log('KRAKEN ORDER RESPONSE!!');
             console.log('err: ', err);
             console.log('data: ', data);
 
-            if (!err && data.success === 1) {
+            if (!err && _.isEmpty(data.error)) {
+                console.log('KRAKEN resolved successfully!');
                 deferred.resolve(true);
             }
             else {
+                console.log('KRAKEN error on order!');
                 deferred.resolve(false);
             }
         });
@@ -168,6 +164,6 @@ module.exports = {
             });
         };
         
-        interval = setInterval(self.checkOrderStatus, config.interval);
+        interval = setInterval(checkOrderStatus, config.interval);
     }
 };

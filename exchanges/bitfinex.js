@@ -134,7 +134,7 @@ module.exports = {
                 market = config[self.exchangeName].marketMap[config.market];
                 
             bitfinex.active_orders(function (err, data) {
-                if (!err && !JSON.parse(data.body)) {
+                if (!err && _.isEmpty(JSON.parse(data.body))) {
                     self.getBalance();
 
                     clearInterval(interval);

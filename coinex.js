@@ -103,7 +103,13 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
       data+= chunk;
     });
     res.on('end', function() {
-      callback(false, JSON.parse(data));
+      console.log(data);
+      try {
+        callback(false, JSON.parse(data));
+      }
+      catch (e) {
+        callback(true, null);
+      }
     });
   });
 

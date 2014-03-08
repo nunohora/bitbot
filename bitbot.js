@@ -11,8 +11,8 @@ module.exports = {
     canLookForPrices: true,
 
     exchangeMarkets: {
-        'cryptsy': require('./exchanges/cryptsy'),
-        'vircurex': require('./exchanges/vircurex'),
+        // 'cryptsy': require('./exchanges/cryptsy'),
+        // 'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
@@ -152,6 +152,7 @@ module.exports = {
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
+        console.log('checking exchanges statuses');
         this.exchangeMarkets[ex1Name].startOrderCheckLoop();
         this.exchangeMarkets[ex2Name].startOrderCheckLoop();
 
