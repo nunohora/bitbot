@@ -63,7 +63,7 @@ module.exports = {
             amount: Math.round(amount * 100000000)
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
-            if (!err && data) {
+            if (!err && data && isEmpty(data.error)) {
                 deferred.resolve(true);
             }
             else {

@@ -64,7 +64,7 @@ module.exports = {
                 var group = all(promises).then(function () {
                     console.log('*** Finished Checking Exchange Prices *** '.blue);
 
-                    result = self.calculateArbOpportunity();
+                    result = self.calculateArbOpportunity(self.getMarketsWithoutOpenOrders());
 
                     //escaping the setInterval
                     if (result.length) {
@@ -174,18 +174,18 @@ module.exports = {
         this.start(config.market, config.tradeAmount);
     },
 
-    calculateArbOpportunity: function () {
+    calculateArbOpportunity: function (exchanges) {
         var exArray = [],
             arb,
             arrayOfArbs = [],
-            keys = _.keys(this.exchangeMarkets);
+            keys = _.keys(exchanges);
 
         //compare all exchanges prices from each exchange with each other
         for (var i = 0, len = keys.length; i < len; i++) {
-            var ex1 = this.exchangeMarkets[keys[i]];
+            var ex1 = exchanges[keys[i]];
             for (var j = 0; j < len; j++) {
-                var ex2 = this.exchangeMarkets[keys[j]];
-                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
+                var ex2 = exchanges[keys[j]];
+                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName] && !ex2.hasOpenOrder) {
                     arb = this.calculateViability(ex1, ex2);
                     
                     if (arb) {

@@ -157,9 +157,9 @@ module.exports = {
         checkOrderStatus = function () {
             kraken.api('OpenOrders', null, function (err, data) {
                 console.log('KRAKEN OPEN ORDERS: ', data);
-                if (!err && !data) {
+                if (!err && data && data['result'] && _.isEmpty(data['result'].open)) {
                     self.hasOpenOrder = false;
-
+                        
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }
