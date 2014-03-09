@@ -173,7 +173,11 @@ module.exports = {
                     console.log('VIRCUREX ORDER CLEARED!');
                     self.getBalance();
                     
+                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
+                }
+                else {
+                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 }
             });
         };

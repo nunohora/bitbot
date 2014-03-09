@@ -57,8 +57,6 @@ module.exports = {
             mkt = config[this.exchangeName].marketMap[market];
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        amount = 0;
         
         this.hasOpenOrder = true;
 
@@ -133,11 +131,17 @@ module.exports = {
             var deferred = new Deferred(),
                 market = config[self.exchangeName].marketMap[config.market];
                 
+            console.log('bitfinex order check');
             bitfinex.active_orders(function (err, data) {
+                console.log('bitfinex order data: ', data);
                 if (!err && _.isEmpty(JSON.parse(data.body))) {
                     self.getBalance();
 
+                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
+                }
+                else {
+                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 }
             });
         };

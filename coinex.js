@@ -58,17 +58,7 @@ CoinEX.prototype.cancelOrder = function(orderId, callback) {
 
 CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodType) {
   var _this = this,
-      content;
-
-  if (methodType === 'POST') {
-    content = {
-      'method': method,
-      'nonce': ++this.nonce,
-    };
-  }
-  else {
-    content = '';
-  }
+      content = '';
 
   if (!!params && typeof(params) == 'object') {
     Object.keys(params).forEach(function (key) {
@@ -97,6 +87,9 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     'API-Key': this.key,
     'API-Sign': sign
   };
+  if (params) {
+    options.form = params;
+  }
 
   var req = https.request(options, function(res) {
     var data = '';

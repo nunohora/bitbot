@@ -59,11 +59,11 @@ module.exports = {
         coinex.trade({
             trade_pair_id: config[this.exchangeName].marketMap[market],
             bid: type === 'buy' ? true : false,
-            rate: rate * 100000000,
-            amount: amount * 100000000
+            rate: Math.round(rate * 100000000),
+            amount: Math.round(amount * 100000000)
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
-            if (!err && data.success === 1) {
+            if (!err && data) {
                 deferred.resolve(true);
             }
             else {
@@ -149,7 +149,11 @@ module.exports = {
                 if (!err && data.error === 'no orders') {
                     self.getBalance();
 
+                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
+                }
+                else {
+                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 }
             });
         };

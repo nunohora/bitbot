@@ -159,7 +159,12 @@ module.exports = {
                 console.log('KRAKEN OPEN ORDERS: ', data);
                 if (!err && !data) {
                     self.hasOpenOrder = false;
+
+                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
+                }
+                else {
+                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 }
             });
         };

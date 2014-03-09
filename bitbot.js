@@ -28,14 +28,13 @@ module.exports = {
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
-        promises = _.map(this.exchangeMarkets, function (exchange) {
-            if (!exchange.hasOpenOrders) {
-                return exchange.getBalance();
-            }
+        promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
+            return exchange.getBalance();
         }, this);
 
         all(promises).then(function () {
-            console.log('Total balance of exchanges: '.red, self.getTotalBalanceInExchanges());
+            console.log('Total balance of exchanges: '.red);
+            console.log(self.getTotalBalanceInExchanges());
 
             self.startLookingAtPrices();
         });
@@ -53,7 +52,7 @@ module.exports = {
 
                 console.log('*** Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
 
-                var promises = _.map(self.exchangeMarkets, function (exchange) {
+                var promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
 
                     // only use markets that dont have open orders
                     if (!exchange.hasOpenOrders) {
@@ -143,15 +142,16 @@ module.exports = {
 
         console.log("\007");
         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.exchangeName);
-        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.exchangeName);
-        // console.log('Profit: '.green + (profit.profit - cost.cost).toFixed(8) + ' ' + config.market.split("_")[1]);
+        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
+        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.name);
+        console.log('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
 
         var group = all(
             self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
             self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
         ).then(function (response) {
+            utils.sendMail(JSON.stringify(arb));
             if (response[0] && response[1]) {
                 console.log('trade response!');
                 console.log(response[0]);
@@ -171,7 +171,7 @@ module.exports = {
 
         this.canLookForPrices = true;
 
-        // this.start(config.market, config.tradeAmount);
+        this.start(config.market, config.tradeAmount);
     },
 
     calculateArbOpportunity: function () {
@@ -259,16 +259,24 @@ module.exports = {
             var exchangeBalance = exchange.balances;
 
             _.each(exchangeBalance, function (currency, index) {
-                if (totalBalances[index]) {
-                    totalBalances[index] += currency;
-                }
+                if (currency > 0) {
+                    if (totalBalances[index]) {
+                        totalBalances[index] += currency;
+                    }
 
-                else {
-                    totalBalances[index] = currency;
+                    else {
+                        totalBalances[index] = currency;
+                    }
                 }
             }, this);
         }, this);
 
         return totalBalances;
+    },
+
+    getMarketsWithoutOpenOrders: function () {
+        return _.filter(this.exchangeMarkets, function (exchange) {
+            return !exchange.hasOpenOrder;
+        }, this);
     }
 };
