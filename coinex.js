@@ -60,7 +60,7 @@ CoinEX.prototype.cancelOrder = function(orderId, callback) {
 
 CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodType) {
   var _this = this,
-      content = '';
+      content = {};
 
   if (!!params && typeof(params) == 'object') {
     Object.keys(params).forEach(function (key) {
