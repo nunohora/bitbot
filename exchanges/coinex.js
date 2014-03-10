@@ -57,13 +57,13 @@ module.exports = {
         this.hasOpenOrder = true;
 
         coinex.trade({
-            trade_pair_id: config[this.exchangeName].marketMap[market],
-            bid: type === 'buy' ? true : false,
-            rate: Math.round(rate * 100000000),
-            amount: Math.round(amount * 100000000)
+            'trade_pair_id': config[this.exchangeName].marketMap[market],
+            'amount': Math.round(amount * 100000000),
+            'bid': type === 'buy' ? true : false,
+            'rate': Math.round(rate * 100000000),
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
-            if (!err && data && isEmpty(data.error)) {
+            if (!err && data && _.isEmpty(data.error)) {
                 deferred.resolve(true);
             }
             else {

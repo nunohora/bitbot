@@ -39,7 +39,7 @@ CoinEX.prototype.depth = function(params, callback) {
 };
 
 CoinEX.prototype.activeOrders = function(params, callback) {
-  var urlSuffix = 'market/' + params.pair + '/';
+  var urlSuffix = 'orders/own';
 
   this.query('listorders', params, callback, urlSuffix);
 };
@@ -47,8 +47,10 @@ CoinEX.prototype.activeOrders = function(params, callback) {
 CoinEX.prototype.trade = function(params, callback) {
   var urlSuffix = 'orders';
 
-  console.log('coinex params:', params);
-  console.log(urlSuffix);
+  params = {
+    'order': params
+  };
+
   this.query('neworder', params, callback, urlSuffix, 'POST');
 };
 
@@ -72,7 +74,12 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     });
   }
 
-  content = querystring.stringify(content);
+  if (method === 'neworder')  {
+    content = querystring.stringify(params);
+  }
+  else {
+    content = querystring.stringify(content);
+  }
 
   var sign = crypto
     .createHmac('sha512', new Buffer(this.secret, 'utf8'))
@@ -87,9 +94,6 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     'API-Key': this.key,
     'API-Sign': sign
   };
-  if (params) {
-    options.form = params;
-  }
 
   var req = https.request(options, function(res) {
     var data = '';

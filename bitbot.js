@@ -185,7 +185,7 @@ module.exports = {
             var ex1 = exchanges[keys[i]];
             for (var j = 0; j < len; j++) {
                 var ex2 = exchanges[keys[j]];
-                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName] && !ex2.hasOpenOrder) {
+                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arb = this.calculateViability(ex1, ex2);
                     
                     if (arb) {

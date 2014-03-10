@@ -25,7 +25,7 @@ module.exports = {
         
         bitfinex.wallet_balances(function (err, data) {
             if (!err) {
-                _.each(JSON.parse(data.body), function (balance, index) {
+                _.each(data, function (balance, index) {
                     var currency;
 
                     if (balance['type'] === 'exchange') {
@@ -60,11 +60,12 @@ module.exports = {
         
         this.hasOpenOrder = true;
 
-        bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data, orderId) {
-            console.log('orderId:', JSON.parse(orderId)['order_id']);
+        bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data) {
+            console.log('bitfinex orderId:', data['order_id']);
             
-            if (!err && JSON.parse(orderId)['order_id']) {
+            if (!err && data['order_id']) {
                 console.log('BITFINEX ORDER SUCCESSFULL');
+                console.log(data);
                 deferred.resolve(true);
             }
             else {
@@ -99,8 +100,6 @@ module.exports = {
 
         bitfinex.orderbook(market, function (err, data) {
             if (!err) {
-                data = JSON.parse(data.body);
-
                 self.prices.buy.price = _.first(data.asks).price;
                 self.prices.buy.quantity = _.first(data.asks).amount;
 
@@ -131,10 +130,8 @@ module.exports = {
             var deferred = new Deferred(),
                 market = config[self.exchangeName].marketMap[config.market];
                 
-            console.log('bitfinex order check');
             bitfinex.active_orders(function (err, data) {
-                console.log('bitfinex order data: ', data);
-                if (!err && _.isEmpty(JSON.parse(data.body))) {
+                if (!err && _.isEmpty(data)) {
                     self.getBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
