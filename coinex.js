@@ -62,7 +62,7 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
   var _this = this,
       content;
 
-  if (params) {
+  if (method === 'neworder') {
     content = {};
   }
   else {
@@ -97,7 +97,6 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     'API-Sign': sign
   };
 
-  console.log('options: ', options);
   console.log('content: ', content);
 
   var req = https.request(options, function(res) {
@@ -108,11 +107,10 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     });
     res.on('end', function() {
       try {
+        console.log(data);
         callback(false, JSON.parse(data));
       }
       catch (e) {
-        console.log('failure!');
-        console.log(e);
         callback(true, null);
       }
     });
