@@ -62,7 +62,7 @@ module.exports = {
 
         Cexio.place_order(type, amount, rate, config[this.exchangeName].marketMap[market] , function (err, data) {
             console.log('CEX.IO place order data: ', data);
-            if (!err && data.success === 1) {
+            if (!err && data && !data.error) {
                 deferred.resolve(true);
             }
             else {
