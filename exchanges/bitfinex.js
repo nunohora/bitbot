@@ -22,7 +22,7 @@ module.exports = {
             self = this;
 
         this.balances = {};
-        
+
         bitfinex.wallet_balances(function (err, data) {
             if (!err) {
                 _.each(data, function (balance, index) {
@@ -57,12 +57,12 @@ module.exports = {
             mkt = config[this.exchangeName].marketMap[market];
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-        
+
         this.hasOpenOrder = true;
 
         bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data) {
             console.log('bitfinex orderId:', data['order_id']);
-            
+
             if (!err && data['order_id']) {
                 console.log('BITFINEX ORDER SUCCESSFULL');
                 console.log(data);
@@ -129,7 +129,7 @@ module.exports = {
         var checkOrderStatus = function () {
             var deferred = new Deferred(),
                 market = config[self.exchangeName].marketMap[config.market];
-                
+
             bitfinex.active_orders(function (err, data) {
                 if (!err && _.isEmpty(data)) {
                     self.getBalance();

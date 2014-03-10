@@ -12,7 +12,8 @@ module.exports = {
 
     exchangeMarkets: {
         // 'cryptsy': require('./exchanges/cryptsy'),
-        'vircurex': require('./exchanges/vircurex'),
+        'cexio': require('./exchanges/cexio'),
+        // 'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
@@ -187,7 +188,7 @@ module.exports = {
                 var ex2 = exchanges[keys[j]];
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arb = this.calculateViability(ex1, ex2);
-                    
+
                     if (arb) {
                         arrayOfArbs.push(arb);
                     }
