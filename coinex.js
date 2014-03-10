@@ -95,6 +95,10 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     'API-Sign': sign
   };
 
+  console.log('options: ', options);
+  console.log('content: ', content);
+  console.log('content params: ', params);
+
   var req = https.request(options, function(res) {
     var data = '';
     res.setEncoding('utf8');
