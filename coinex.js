@@ -74,12 +74,7 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     });
   }
 
-  if (method === 'neworder')  {
-    content = querystring.stringify(params);
-  }
-  else {
-    content = querystring.stringify(content);
-  }
+  content = querystring.stringify(content);
 
   var sign = crypto
     .createHmac('sha512', new Buffer(this.secret, 'utf8'))
@@ -97,7 +92,6 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
 
   console.log('options: ', options);
   console.log('content: ', content);
-  console.log('content params: ', params);
 
   var req = https.request(options, function(res) {
     var data = '';
