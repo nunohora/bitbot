@@ -28,6 +28,7 @@ module.exports = {
     calculateCost: function (amount, price, currency, fee, decimals) {
         var cost = 10000,
             potentialCost,
+            tempAmount,
             base = config.market.split("_")[0],
             alt = config.market.split("_")[1];
 
@@ -36,10 +37,10 @@ module.exports = {
             cost = amount * price;
         }
         else if (currency === alt) {
-            amount = amount * price;
-            cost = amount + (amount * fee);
+            tempAmount = amount * price;
+            cost = tempAmount + (tempAmount * fee);
         }
-        
+
         return {
             amount: amount.toFixed(decimals),
             cost: cost.toFixed(8)
