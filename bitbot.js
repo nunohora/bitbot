@@ -113,21 +113,12 @@ module.exports = {
             balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()] || 0,
             balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()] || 0;
 
-        console.log('&&&&&&&&&&&&&&&'.yellow);
-        console.log('Balance to buy: '.yellow, balanceToBuy);
-        console.log('Required balance to buy: '.yellow, (ex1.buy * ex1.amount));
-        console.log('Enough balance to buy?: '.yellow, balanceToBuy > (ex1.buy * ex1.amount));
-        console.log('Balance to sell: '.yellow, balanceToSell);
-        console.log('Required balance to sell: '.yellow, ex2.amount);
-        console.log('Enough balance to sell?: '.yellow, balanceToSell > ex2.amount);
-        console.log('&&&&&&&&&&&&&&&'.yellow);
-
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
-            console.log('Cool! There is enough balance to perform the transaction!');
+            console.log('Cool! There is enough balance to perform the transaction!'.green);
             return true;
         }
         else {
-            console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(");
+            console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
             return false;
         }
     },
@@ -214,7 +205,6 @@ module.exports = {
             hasEnoughVolume;
 
         smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2, config.tradeAmount);
-        console.log('smallestAmountAvailable: ', smallestAmountAvailable);
 
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
         cost = ex1.calculateCost(smallestAmountAvailable, smallestDecimal);
@@ -223,6 +213,7 @@ module.exports = {
         console.log('###########'.green);
         console.log(ex1.exchangeName + ' cost: ' + cost.cost);
         console.log(ex2.exchangeName + ' profit: ' + profit.profit);
+        console.log('###########'.green);
 
         finalProfit = (profit.profit - cost.cost).toFixed(8);
 
