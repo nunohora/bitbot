@@ -74,6 +74,15 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
+        console.log('KRAKEN ORDER');
+        console.log({
+            pair: config[this.exchangeName].marketMap[market],
+            type: newType,
+            ordertype: 'limit',
+            price: newRate,
+            volume: newAmount
+        });
+
         kraken.api('AddOrder', {
             pair: config[this.exchangeName].marketMap[market],
             type: newType,

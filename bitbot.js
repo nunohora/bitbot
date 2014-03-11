@@ -10,6 +10,8 @@ module.exports = {
 
     canLookForPrices: true,
 
+    totalBalance: {},
+
     exchangeMarkets: {
         // 'cryptsy': require('./exchanges/cryptsy'),
         'cexio': require('./exchanges/cexio'),
@@ -35,7 +37,9 @@ module.exports = {
 
         all(promises).then(function () {
             console.log('Total balance of exchanges: '.red);
-            console.log(self.getTotalBalanceInExchanges());
+
+            self.totalBalance = self.getTotalBalanceInExchanges();
+            console.log(self.totalBalance);
 
             self.startLookingAtPrices();
         });
@@ -139,7 +143,11 @@ module.exports = {
             self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
             self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
         ).then(function (response) {
-            utils.sendMail(JSON.stringify(arb));
+            utils.sendMail(JSON.stringify({
+                arb: arb,
+                totalBalance: self.totalBalance
+            }));
+            
             if (response[0] && response[1]) {
                 self.checkOrderStatuses(ex1.name, ex2.name);
             }
