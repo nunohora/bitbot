@@ -30,7 +30,7 @@ module.exports = {
         config.tradeAmount = +tradeAmount;
 
         promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
-            return exchange.getBalance();
+            return exchange.fetchBalance();
         }, this);
 
         all(promises).then(function () {
@@ -157,6 +157,7 @@ module.exports = {
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
         console.log('checking exchanges statuses');
+
         this.exchangeMarkets[ex1Name].startOrderCheckLoop();
         this.exchangeMarkets[ex2Name].startOrderCheckLoop();
 
@@ -203,20 +204,21 @@ module.exports = {
     },
 
     calculateAfterFees: function (ex1, ex2) {
-        var amount = config.tradeAmount,
-            amountToBuy,
+        var amountToBuy,
             amountToSell,
-            cryptsyFee,
+            smallestAmountAvailable,
             finalProfit,
             cost,
             profit,
             smallestDecimal,
             hasEnoughVolume;
 
-        smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
+        smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2, config.tradeAmount);
+        console.log('smallestAmountAvailable: ', smallestAmountAvailable);
 
-        cost = ex1.calculateCost(amount, smallestDecimal);
-        profit = ex2.calculateProfit(amount, smallestDecimal);
+        smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
+        cost = ex1.calculateCost(smallestAmountAvailable, smallestDecimal);
+        profit = ex2.calculateProfit(smallestAmountAvailable, smallestDecimal);
 
         console.log('###########'.green);
         console.log(ex1.exchangeName + ' cost: ' + cost.cost);
@@ -270,5 +272,11 @@ module.exports = {
         return _.filter(this.exchangeMarkets, function (exchange) {
             return !exchange.hasOpenOrder;
         }, this);
+    },
+
+    getSmallestAmountAvailable: function (ex1, ex2, maxTradeAmount) {
+        var min = Math.min(ex1.prices.buy.quantity, ex2.prices.sell.quantity, maxTradeAmount);
+
+        return min > config.minTradeAmount ? min : config.minTradeAmount;
     }
 };

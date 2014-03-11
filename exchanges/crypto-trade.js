@@ -19,7 +19,7 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function (type) {
+    fetchBalance: function (type) {
         var deferred = new Deferred(),
             self = this;
 
@@ -56,7 +56,7 @@ module.exports = {
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         // amount = 0;
-        
+
         this.hasOpenOrder = true;
 
         cryptoTrade.trade({

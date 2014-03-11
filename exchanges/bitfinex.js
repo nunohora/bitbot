@@ -17,7 +17,7 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function () {
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
@@ -132,7 +132,7 @@ module.exports = {
 
             bitfinex.active_orders(function (err, data) {
                 if (!err && _.isEmpty(data)) {
-                    self.getBalance();
+                    self.fetchBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);

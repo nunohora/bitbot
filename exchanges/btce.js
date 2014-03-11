@@ -17,18 +17,18 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function () {
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
         this.balances = {};
-        
+
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
 
                 self.hasOpenOrder = false;
-                
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -114,7 +114,7 @@ module.exports = {
         setTimeout(function () {
             try {deferred.resolve();} catch (e){}
         }, config.requestTimeouts.prices);
-        
+
         return deferred.promise;
     },
 
@@ -130,7 +130,7 @@ module.exports = {
                 console.log('BTCE ORDER DATA: ', data);
 
                 if (!err && data.error === 'no orders') {
-                    self.getBalance();
+                    self.fetchBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);

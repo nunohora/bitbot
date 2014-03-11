@@ -16,13 +16,13 @@ module.exports = {
     prices: {},
 
     hasOpenOrder: false,
-    
-    getBalance: function () {
+
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
         this.balances = {};
-        
+
         coinse.getInfo(function (err, data) {
             if (!err) {
                 _.each(data.wallets, function (balance, index) {
@@ -121,7 +121,7 @@ module.exports = {
     startOrderCheckLoop: function () {
         var self = this,
             interval;
-        
+
         var checkOrderStatus = function () {
             var market = config[self.exchangeName].marketMap[config.market];
 
@@ -132,8 +132,8 @@ module.exports = {
                 console.log('COINS-E ORDER DATA: ', data);
 
                 if (!err && data.error === 'no orders') {
-                    self.getBalance();
-                    
+                    self.fetchBalance();
+
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }

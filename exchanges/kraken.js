@@ -21,13 +21,13 @@ module.exports = {
     },
 
     hasOpenOrder: false,
-    
-    getBalance: function () {
+
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
         this.balances = {};
-        
+
         kraken.api('Balance', null, function (err, data) {
             if (!err) {
                 _.each(data.result, function (balance, idx) {
@@ -66,7 +66,7 @@ module.exports = {
         if (config.market === 'LTC_BTC') {
             newType = type === 'buy' ? 'sell' : 'buy';
             newRate = (1/rate).toFixed(5);
-            
+
             newAmount = (amount/newRate).toFixed(8);
         }
 
@@ -159,7 +159,8 @@ module.exports = {
                 console.log('KRAKEN OPEN ORDERS: ', data);
                 if (!err && data && data['result'] && _.isEmpty(data['result'].open)) {
                     self.hasOpenOrder = false;
-                        
+                    self.fetchBalance();
+
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }
@@ -168,7 +169,7 @@ module.exports = {
                 }
             });
         };
-        
+
         interval = setInterval(checkOrderStatus, config.interval);
     }
 };

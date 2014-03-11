@@ -18,8 +18,8 @@ module.exports = {
     openOrderId: null,
 
     hasOpenOrder: false,
-    
-    getBalance: function () {
+
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
@@ -54,9 +54,9 @@ module.exports = {
             self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-        
+
         // amount = 0;
-        
+
         this.hasOpenOrder = true;
 
         client.createorder(marketId, type, amount, rate, function (err, data) {
@@ -133,9 +133,9 @@ module.exports = {
 
                 if (!err && !data.return) {
                     self.openOrderId = null;
-                    
-                    self.getBalance();
-                    
+
+                    self.fetchBalance();
+
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }

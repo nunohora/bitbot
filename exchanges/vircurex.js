@@ -28,7 +28,7 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function () {
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
@@ -39,7 +39,7 @@ module.exports = {
                 _.each(data.balances, function (balance, index) {
                     self.balances[index.toLowerCase()] = +balance.availablebalance;
                 });
-                    
+
                 self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
@@ -81,7 +81,7 @@ module.exports = {
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         // amount = 0;
-        
+
         this.hasOpenOrder = true;
 
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
@@ -154,7 +154,7 @@ module.exports = {
         setTimeout(function () {
             try {deferred.resolve();} catch (e){}
         }, config.requestTimeouts.prices);
-        
+
         return deferred.promise;
     },
 
@@ -171,8 +171,8 @@ module.exports = {
 
                 if (!err && data.numberorders === 0) {
                     console.log('VIRCUREX ORDER CLEARED!');
-                    self.getBalance();
-                    
+                    self.fetchBalance();
+
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }

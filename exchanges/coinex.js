@@ -17,7 +17,7 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function () {
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
@@ -147,7 +147,7 @@ module.exports = {
             coinex.activeOrders({pair: market}, function (err, data) {
                 console.log('COINEX DATA ORDER:, ', data);
                 if (!err && data.error === 'no orders') {
-                    self.getBalance();
+                    self.fetchBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);

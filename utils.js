@@ -77,15 +77,6 @@ module.exports = {
         return totalBalances;
     },
 
-    hasEnoughVolume: function (ex1, ex2) {
-        if (ex1.amount > config.tradeAmount && ex2.amount > config.tradeAmount) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    },
-
     orderByProfit: function (arrayOfArbs) {
         return _.sortBy(arrayOfArbs, function (arb) {
             return -(+arb.finalProfit);

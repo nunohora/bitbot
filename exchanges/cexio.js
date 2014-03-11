@@ -17,7 +17,7 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    getBalance: function () {
+    fetchBalance: function () {
         var deferred = new Deferred(),
             self = this;
 
@@ -133,7 +133,7 @@ module.exports = {
                 console.log('CEX.IO ORDER DATA: ', data);
 
                 if (!err && _.isArray(data) && _.isEmpty(data)) {
-                    self.getBalance();
+                    self.fetchBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
