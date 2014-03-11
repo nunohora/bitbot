@@ -72,8 +72,9 @@ module.exports = {
                         arb = self.getBestArb(result);
 
                         if (arb) {
-                            self.makeTrade(arb);
                             clearInterval(interval);
+
+                            self.makeTrade(arb);
                         }
                         else {
                             self.canLookForPrices = true;
@@ -90,7 +91,7 @@ module.exports = {
     },
 
     getBestArb: function (arrayOfArbs) {
-      var orderedByProfit = this.orderByProfit(arrayOfArbs),
+      var orderedByProfit = utils.orderByProfit(arrayOfArbs),
           bestArb,
           currArb;
 
@@ -98,17 +99,12 @@ module.exports = {
         currArb = arrayOfArbs[i];
 
         if (this.checkExchangeForEnoughBalance(currArb)) {
+
             return currArb;
         }
       }
 
       return false;
-    },
-
-    orderByProfit: function (arrayOfArbs) {
-        return _.sortBy(arrayOfArbs, function (arb) {
-            return -(+arb.finalProfit);
-        });
     },
 
     checkExchangeForEnoughBalance: function (arb) {
@@ -154,18 +150,12 @@ module.exports = {
         ).then(function (response) {
             utils.sendMail(JSON.stringify(arb));
             if (response[0] && response[1]) {
-                console.log('trade response!');
-                console.log(response[0]);
-                console.log(response[1]);
                 self.checkOrderStatuses(ex1.name, ex2.name);
             }
         });
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
-        console.log('checking exchanges statuses');
-        console.log(ex1Name);
-        console.log(ex2Name);
         console.log('checking exchanges statuses');
         this.exchangeMarkets[ex1Name].startOrderCheckLoop();
         this.exchangeMarkets[ex2Name].startOrderCheckLoop();
@@ -220,7 +210,8 @@ module.exports = {
             finalProfit,
             cost,
             profit,
-            smallestDecimal;
+            smallestDecimal,
+            hasEnoughVolume;
 
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
 

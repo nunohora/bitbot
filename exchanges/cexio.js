@@ -75,11 +75,13 @@ module.exports = {
 
     calculateProfit: function (amount, decimals) {
         var sellFee = config[this.exchangeName].fees[config.market].sell;
+
         return utils.calculateProfit(amount, this.prices.sell.price, sellFee.currency, sellFee.percentage, decimals);
     },
 
     calculateCost: function (amount, decimals) {
         var buyFee = config[this.exchangeName].fees[config.market].buy;
+
         return utils.calculateCost(amount, this.prices.buy.price, buyFee.currency, buyFee.percentage, decimals);
     },
 
@@ -130,7 +132,7 @@ module.exports = {
             Cexio.open_orders(market, function (err, data) {
                 console.log('CEX.IO ORDER DATA: ', data);
 
-                if (!err && data.error === 'no orders') {
+                if (!err && _.isArray(data) && _.isEmpty(data)) {
                     self.getBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
