@@ -281,7 +281,7 @@ module.exports = {
     getSmallestAmountAvailable: function (ex1, ex2, maxTradeAmount) {
         var min = Math.min(ex1.prices.buy.quantity, ex2.prices.sell.quantity, maxTradeAmount);
 
-        return min > config.minTradeAmount ? min : config.minTradeAmount;
+        return min > config.maxTradeAmount ? config.maxTradeAmount : min;
     },
 
     isMinimumAmountViable: function (ex1, ex2, amount) {
