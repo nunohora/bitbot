@@ -147,7 +147,7 @@ module.exports = {
                 arb: arb,
                 totalBalance: self.totalBalance
             }));
-            
+
             if (response[0] && response[1]) {
                 self.checkOrderStatuses(ex1.name, ex2.name);
             }

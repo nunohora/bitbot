@@ -47,9 +47,9 @@ CoinEX.prototype.activeOrders = function(params, callback) {
 CoinEX.prototype.trade = function(params, callback) {
   var urlSuffix = 'orders';
 
-  params = {
-    'order': params
-  };
+  // params = {
+  //   'order': params
+  // };
 
   this.query('neworder', params, callback, urlSuffix, 'POST');
 };
@@ -63,7 +63,7 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
       content;
 
   if (method === 'neworder') {
-    content = {};
+    content = params;
   }
   else {
     content = '';
@@ -81,7 +81,12 @@ CoinEX.prototype.query = function(method, params, callback, urlSuffix, methodTyp
     });
   }
 
-  content = querystring.stringify(content);
+  if (method === 'neworder') {
+    content = JSON.stringify(content);
+  }
+  else {
+    content = querystring.stringify(content);
+  }
 
   var sign = crypto
     .createHmac('sha512', new Buffer(this.secret, 'utf8'))
