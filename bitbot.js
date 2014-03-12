@@ -213,7 +213,7 @@ module.exports = {
             hasEnoughVolume,
             isMinimumAmountViable;
 
-        smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2, config.tradeAmount);
+        smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2);
 
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
         cost = ex1.calculateCost(smallestAmountAvailable, smallestDecimal);
@@ -278,10 +278,10 @@ module.exports = {
         }, this);
     },
 
-    getSmallestAmountAvailable: function (ex1, ex2, maxTradeAmount) {
-        var min = Math.min(ex1.prices.buy.quantity, ex2.prices.sell.quantity, maxTradeAmount);
+    getSmallestAmountAvailable: function (ex1, ex2) {
+        var min = Math.min(ex1.prices.buy.quantity, ex2.prices.sell.quantity, config.tradeAmount);
 
-        return min > config.maxTradeAmount ? config.maxTradeAmount : min;
+        return min > config.tradeAmount ? config.tradeAmount : min;
     },
 
     isMinimumAmountViable: function (ex1, ex2, amount) {
