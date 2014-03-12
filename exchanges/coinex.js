@@ -146,8 +146,10 @@ module.exports = {
 
             coinex.activeOrders({pair: market}, function (err, data) {
                 console.log('COINEX DATA ORDER:, ', data);
-                if (!err && data.error === 'no orders') {
+
+                if (!err && data && _.isEmpty(data.orders)) {
                     clearInterval(interval);
+
                     self.fetchBalance();
 
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);

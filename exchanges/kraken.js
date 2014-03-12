@@ -67,7 +67,7 @@ module.exports = {
             newType = type === 'buy' ? 'sell' : 'buy';
             newRate = (1/rate).toFixed(5);
 
-            newAmount = (amount/newRate).toFixed(8);
+            // newAmount = (amount/newRate).toFixed(8);
         }
 
         this.hasOpenOrder = true;
@@ -80,7 +80,8 @@ module.exports = {
             type: newType,
             ordertype: 'limit',
             price: newRate,
-            volume: newAmount
+            volume: amount,
+            oflags: 'viqc'
         });
 
         kraken.api('AddOrder', {
@@ -88,7 +89,8 @@ module.exports = {
             type: newType,
             ordertype: 'limit',
             price: newRate,
-            volume: newAmount
+            volume: amount,
+            oflags: 'viqc'
         }, function (err, data) {
             console.log('KRAKEN ORDER RESPONSE!!');
             console.log('err: ', err);
