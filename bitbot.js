@@ -13,15 +13,15 @@ module.exports = {
     totalBalance: {},
 
     exchangeMarkets: {
-        // 'cryptsy': require('./exchanges/cryptsy'),
         'cexio': require('./exchanges/cexio'),
-        // 'vircurex': require('./exchanges/vircurex'),
         'btce': require('./exchanges/btce'),
-        // 'crypto-trade': require('./exchanges/crypto-trade'),
         'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
-        'coins-e': require('./exchanges/coins-e'),
         'coinex': require('./exchanges/coinex')
+        // 'cryptsy': require('./exchanges/cryptsy'),
+        // 'vircurex': require('./exchanges/vircurex'),
+        // 'crypto-trade': require('./exchanges/crypto-trade'),
+        // 'coins-e': require('./exchanges/coins-e'),
     },
 
 	start: function (marketName, tradeAmount) {
@@ -210,7 +210,8 @@ module.exports = {
             cost,
             profit,
             smallestDecimal,
-            hasEnoughVolume;
+            hasEnoughVolume,
+            isMinimumAmountViable;
 
         smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2, config.tradeAmount);
 
@@ -218,14 +219,18 @@ module.exports = {
         cost = ex1.calculateCost(smallestAmountAvailable, smallestDecimal);
         profit = ex2.calculateProfit(smallestAmountAvailable, smallestDecimal);
 
-        console.log('###########'.green);
-        console.log(ex1.exchangeName + ' cost: ' + cost.cost);
-        console.log(ex2.exchangeName + ' profit: ' + profit.profit);
-        console.log('###########'.green);
 
         finalProfit = (profit.profit - cost.cost).toFixed(8);
 
-        if (finalProfit > 0) {
+        console.log('###########'.green);
+        console.log(ex1.exchangeName + ' profit: '.green, profit.profit);
+        console.log(ex2.exchangeName + ' cost: '.green, cost.cost);
+        console.log('final Profit: ', finalProfit);
+        console.log('###########'.green);
+
+        isMinimumAmountViable = this.isMinimumAmountViable(ex1, ex2, smallestAmountAvailable);
+
+        if (finalProfit > 0 && isMinimumAmountViable) {
             return {
                 ex1: {
                     name: ex1.exchangeName,
@@ -277,5 +282,18 @@ module.exports = {
         var min = Math.min(ex1.prices.buy.quantity, ex2.prices.sell.quantity, maxTradeAmount);
 
         return min > config.minTradeAmount ? min : config.minTradeAmount;
+    },
+
+    isMinimumAmountViable: function (ex1, ex2, amount) {
+        var minEx1 = config[ex1.exchangeName].minAmount.toFixed(8),
+            minEx2 = config[ex2.exchangeName].minAmount.toFixed(8);
+
+        if (amount > minEx1 && amount > minEx2) {
+            return true;
+        }
+        else {
+            console.log('not enough liquidity in exchanges to match order immediately'.red);
+            return false;
+        }
     }
 };
