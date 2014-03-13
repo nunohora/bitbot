@@ -16,8 +16,8 @@ module.exports = {
         'cexio': require('./exchanges/cexio'),
         'btce': require('./exchanges/btce'),
         'bitfinex': require('./exchanges/bitfinex'),
-        'kraken': require('./exchanges/kraken'),
-        'coinex': require('./exchanges/coinex')
+        'kraken': require('./exchanges/kraken')
+        // 'coinex': require('./exchanges/coinex')
         // 'cryptsy': require('./exchanges/cryptsy'),
         // 'vircurex': require('./exchanges/vircurex'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
@@ -168,6 +168,7 @@ module.exports = {
     calculateArbOpportunity: function (exchanges) {
         var exArray = [],
             arb,
+            arb2,
             arrayOfArbs = [],
             keys = _.keys(exchanges);
 
@@ -178,9 +179,13 @@ module.exports = {
                 var ex2 = exchanges[keys[j]];
                 if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
                     arb = this.calculateViability(ex1, ex2);
+                    arb2 = this.calculateViability(ex2, ex1);
 
                     if (arb) {
                         arrayOfArbs.push(arb);
+                    }
+                    if (arb2) {
+                        arrayOfArbs.push(arb2);
                     }
                 }
             }
@@ -196,9 +201,7 @@ module.exports = {
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
-        else if (ex1.prices.sell.price > ex2.prices.buy.price) {
-            isViable = this.calculateAfterFees(ex2, ex1);
-        }
+
         return isViable;
     },
 
