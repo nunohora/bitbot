@@ -15,7 +15,7 @@ module.exports = {
 
     prices: {},
 
-    hasOpenOrder: true,
+    hasOpenOrder: false,
 
     fetchBalance: function () {
         var deferred = new Deferred(),
