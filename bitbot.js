@@ -43,13 +43,6 @@ module.exports = {
             self.totalBalance = self.getTotalBalanceInExchanges();
             console.log(self.totalBalance);
 
-            //hack
-            if (self.count < 1) {
-                console.log('hack');
-                self.exchangeMarkets['bitfinex'].hasOpenOrders = true;
-                self.count++;
-            }
-
             self.startLookingAtPrices();
         });
     },
