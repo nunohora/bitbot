@@ -12,12 +12,14 @@ module.exports = {
 
     totalBalance: {},
 
+    count: 0,
+
     exchangeMarkets: {
         'cexio': require('./exchanges/cexio'),
         'btce': require('./exchanges/btce'),
         'bitfinex': require('./exchanges/bitfinex'),
-        'kraken': require('./exchanges/kraken')
-        // 'coinex': require('./exchanges/coinex')
+        'kraken': require('./exchanges/kraken'),
+        'coinex': require('./exchanges/coinex')
         // 'cryptsy': require('./exchanges/cryptsy'),
         // 'vircurex': require('./exchanges/vircurex'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
@@ -34,6 +36,14 @@ module.exports = {
         promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
             return exchange.fetchBalance();
         }, this);
+
+        //hack
+        if (this.count < 1) {
+            this.exchangeMarkets['bitfinex'].startOrderCheckLoop();
+            this.exchangeMarkets['coinex'].startOrderCheckLoop();
+
+            this.count++;
+        }
 
         all(promises).then(function () {
             console.log('Total balance of exchanges: '.red);

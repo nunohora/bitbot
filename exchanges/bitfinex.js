@@ -15,7 +15,7 @@ module.exports = {
 
     prices: {},
 
-    hasOpenOrder: false,
+    hasOpenOrder: true,
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -34,6 +34,8 @@ module.exports = {
                 }, self);
 
                 self.hasOpenOrder = false;
+
+                console.log(self.balances);
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }

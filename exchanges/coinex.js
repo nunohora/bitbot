@@ -15,7 +15,7 @@ module.exports = {
 
     prices: {},
 
-    hasOpenOrder: false,
+    hasOpenOrder: true,
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -26,7 +26,7 @@ module.exports = {
         coinex.getInfo(function (err, data) {
             if (!err) {
                 _.each(data.balances, function (balance) {
-                    self.balances[balance['currency_name'].toLowerCase()] = +(balance['amount']/100000000).toFixed(8);
+                    self.balances[balance['currency_name'].toLowerCase()] = +(balance['amount']/Math.pow(10, 8)).toFixed(8);
                 });
 
                 self.hasOpenOrder = false;
@@ -58,9 +58,9 @@ module.exports = {
 
         coinex.trade({
             'trade_pair_id': config[this.exchangeName].marketMap[market],
-            'amount': Math.round(amount * 100000000),
+            'amount': Math.round(amount * Math.pow(10, 8)),
             'bid': type === 'buy' ? true : false,
-            'rate': Math.round(rate * 100000000),
+            'rate': Math.round(rate * Math.pow(10, 8)),
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
             if (!err && data && _.isEmpty(data.error)) {
@@ -115,11 +115,14 @@ module.exports = {
                 ask = _.min(asks, function (ask) {return ask.rate;});
                 bid = _.max(bids, function (bid) {return bid.rate;});
 
-                self.prices.buy.price = (ask['rate']/100000000).toFixed(8);
-                self.prices.buy.quantity = (ask['amount']/100000000).toFixed(8);
+                self.prices.buy.price = (ask['rate']/Math.pow(10, 8)).toFixed(8);
+                self.prices.buy.quantity = (ask['amount']/Math.pow(10, 8)).toFixed(8);
 
-                self.prices.sell.price = (bid['rate']/100000000).toFixed(8);
-                self.prices.sell.quantity = (bid['amount']/100000000).toFixed(8);
+                self.prices.sell.price = (bid['rate']/Math.pow(10, 8)).toFixed(8);
+                self.prices.sell.quantity = (bid['amount']/Math.pow(10, 8)).toFixed(8);
+
+                console.log('coinex prices');
+                console.log(self.prices);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
