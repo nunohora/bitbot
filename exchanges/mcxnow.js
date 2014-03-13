@@ -2,14 +2,14 @@ var colors      = require('colors'),
     _           = require('underscore'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
-    CoinEX        = require('../coinex'),
+    Mcxnow    = require('mcxnow'),
     utils       = require('../utils');
 
-var coinex = new CoinEX(config['coinex'].apiKey, config['coinex'].secret);
+var mcnowPrivate = new Mcxnow(config['mcxnow'].username, config['mcxnow'].pass);
 
 module.exports = {
 
-    exchangeName: 'coinex',
+    exchangeName: 'mcxnow',
 
     balances: {},
 
@@ -23,11 +23,15 @@ module.exports = {
 
         this.balances = {};
 
-        coinex.getInfo(function (err, data) {
+        mcnowPrivate.wallet_balances(function (err, data) {
             if (!err) {
-                _.each(data.balances, function (balance) {
-                    self.balances[balance['currency_name'].toLowerCase()] = +(balance['amount']/Math.pow(10, 8)).toFixed(8);
-                });
+                _.each(data, function (balance, index) {
+                    var currency;
+
+                    if (balance['type'] === 'exchange') {
+                        self.balances[balance['currency']] = +balance['amount'];
+                    }
+                }, self);
 
                 self.hasOpenOrder = false;
 
@@ -48,26 +52,23 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
+        var deferred = new Deferred(),
+            self = this,
+            mkt = config[this.exchangeName].marketMap[market];
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         this.hasOpenOrder = true;
 
-        coinex.trade({
-            'trade_pair_id': config[this.exchangeName].marketMap[market],
-            'amount': Math.round(amount * Math.pow(10, 8)),
-            'bid': type === 'buy' ? true : false,
-            'rate': Math.round(rate * Math.pow(10, 8)),
-        }, function (err, data) {
-            console.log('COINEX DATA:, ', data);
-            if (!err && data && _.isEmpty(data.error)) {
+        bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data) {
+            console.log('bitfinex orderId:', data['order_id']);
+
+            if (!err && data['order_id']) {
+                console.log('BITFINEX ORDER SUCCESSFULL');
+                console.log(data);
                 deferred.resolve(true);
             }
             else {
-                console.log(err);
                 deferred.resolve(false);
             }
         });
@@ -88,11 +89,7 @@ module.exports = {
     getExchangeInfo: function () {
         var deferred = new Deferred(),
             market = config[this.exchangeName].marketMap[config.market],
-            self = this,
-            bids = [],
-            asks = [],
-            bid,
-            ask;
+            self = this;
 
         this.prices = {
             buy: {},
@@ -101,28 +98,13 @@ module.exports = {
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        coinex.depth({pair: market}, function (err, data) {
+        bitfinex.orderbook(market, function (err, data) {
             if (!err) {
-                _.each(data['orders'], function (openOrder) {
-                    if (openOrder['bid']) {
-                        bids.push(openOrder);
-                    }
-                    else {
-                        asks.push(openOrder);
-                    }
-                }, this);
+                self.prices.buy.price = _.first(data.asks).price;
+                self.prices.buy.quantity = _.first(data.asks).amount;
 
-                ask = _.min(asks, function (ask) {return ask.rate;});
-                bid = _.max(bids, function (bid) {return bid.rate;});
-
-                self.prices.buy.price = (ask['rate']/Math.pow(10, 8)).toFixed(8);
-                self.prices.buy.quantity = (ask['amount']/Math.pow(10, 8)).toFixed(8);
-
-                self.prices.sell.price = (bid['rate']/Math.pow(10, 8)).toFixed(8);
-                self.prices.sell.quantity = (bid['amount']/Math.pow(10, 8)).toFixed(8);
-
-                console.log('coinex prices');
-                console.log(self.prices);
+                self.prices.sell.price = _.first(data.bids).price;
+                self.prices.sell.quantity = _.first(data.bids).amount;
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
@@ -144,14 +126,14 @@ module.exports = {
         var self = this,
             interval;
 
-        var checkOrderStatus = function (interval) {
-            var market = config[self.exchangeName].marketMap[config.market];
+        var checkOrderStatus = function () {
+            var deferred = new Deferred(),
+                market = config[self.exchangeName].marketMap[config.market];
 
-            coinex.activeOrders({pair: market}, function (err, data) {
-                console.log('COINEX DATA ORDER:, ', data);
-
-                if (!err && data && _.isEmpty(data.orders)) {
+            bitfinex.active_orders(function (err, data) {
+                if (!err && _.isEmpty(data)) {
                     self.fetchBalance();
+
                     console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                     clearInterval(interval);
                 }

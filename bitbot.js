@@ -37,19 +37,18 @@ module.exports = {
             return exchange.fetchBalance();
         }, this);
 
-        //hack
-        if (this.count < 1) {
-            this.exchangeMarkets['bitfinex'].startOrderCheckLoop();
-            this.exchangeMarkets['coinex'].startOrderCheckLoop();
-
-            this.count++;
-        }
-
         all(promises).then(function () {
             console.log('Total balance of exchanges: '.red);
 
             self.totalBalance = self.getTotalBalanceInExchanges();
             console.log(self.totalBalance);
+
+            //hack
+            if (self.count < 1) {
+                console.log('hack');
+                self.exchangeMarkets['bitfinex'].hasOpenOrders = true;
+                self.count++;
+            }
 
             self.startLookingAtPrices();
         });
