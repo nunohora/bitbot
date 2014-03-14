@@ -121,9 +121,6 @@ module.exports = {
                 self.prices.sell.price = (bid['rate']/Math.pow(10, 8)).toFixed(8);
                 self.prices.sell.quantity = (bid['amount']/Math.pow(10, 8)).toFixed(8);
 
-                console.log('coinex prices');
-                console.log(self.prices);
-
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {
@@ -144,7 +141,7 @@ module.exports = {
         var self = this,
             interval;
 
-        var checkOrderStatus = function (interval) {
+        var checkOrderStatus = function () {
             var market = config[self.exchangeName].marketMap[config.market];
 
             coinex.activeOrders({pair: market}, function (err, data) {
