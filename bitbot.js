@@ -4,7 +4,8 @@ var colors = require('colors'),
     when = require('promised-io/promise').when,
     all = require('promised-io/promise').all,
     utils = require('./utils'),
-    Deferred = require("promised-io/promise").Deferred;
+    Deferred = require("promised-io/promise").Deferred,
+    emitter = require('events').EventEmitter;
 
 module.exports = {
 
@@ -12,39 +13,49 @@ module.exports = {
 
     totalBalance: {},
 
-    count: 0,
-
     exchangeMarkets: {
         'cexio': require('./exchanges/cexio'),
         'btce': require('./exchanges/btce'),
         'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
-        'coinex': require('./exchanges/coinex')
+        // 'coinex': require('./exchanges/coinex'),
+        'btcchina': require('./exchanges/btcchina')
         // 'cryptsy': require('./exchanges/cryptsy'),
         // 'vircurex': require('./exchanges/vircurex'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
         // 'coins-e': require('./exchanges/coins-e'),
     },
 
-	start: function (marketName, tradeAmount) {
-        var self = this,
-            promises;
+    initialize: function (marketName, tradeAmount) {
+        var self = this;
 
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
+        this.bindEvents();
+
+        this.fetchBalances();
+    },
+
+    bindEvents: function () {
+        emitter.on('balancesFetched', this.lookForPrices);
+    },
+
+    fetchBalances: function () {
         promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
             return exchange.fetchBalance();
         }, this);
 
         all(promises).then(function () {
-            console.log('Total balance of exchanges: '.red);
-
             self.totalBalance = self.getTotalBalanceInExchanges();
-            console.log(self.totalBalance);
+            console.log('Total balance of exchanges: '.red, self.totalBalance);
 
-            self.startLookingAtPrices();
+            emitter.emit('balancesFetched');
         });
+    },
+
+    //WORK IN PROGRESS!
+    lookForPrices: function () {
     },
 
     startLookingAtPrices: function () {
@@ -60,12 +71,7 @@ module.exports = {
                 console.log('*** Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
 
                 var promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
-
-                    // only use markets that dont have open orders
-                    if (!exchange.hasOpenOrders) {
-                        return exchange.getExchangeInfo();
-                    }
-
+                    return exchange.getExchangeInfo();
                 }, this);
 
                 var group = all(promises).then(function () {
@@ -77,6 +83,7 @@ module.exports = {
                     if (result.length) {
                         arb = self.getBestArb(result);
 
+                        console.log('arb: ', arb);
                         if (arb) {
                             clearInterval(interval);
 
@@ -97,20 +104,13 @@ module.exports = {
     },
 
     getBestArb: function (arrayOfArbs) {
-      var orderedByProfit = utils.orderByProfit(arrayOfArbs),
-          bestArb,
-          currArb;
+        var orderedByProfit = utils.orderByProfit(arrayOfArbs),
+            currArb;
 
-      for (var i = 0; i < arrayOfArbs.length; i++) {
-        currArb = arrayOfArbs[i];
-
-        if (this.checkExchangeForEnoughBalance(currArb)) {
-
-            return currArb;
-        }
-      }
-
-      return false;
+        console.log('ordered by profit');
+        return _.first(_.filter(orderedByProfit, function (arb) {
+            return this.checkExchangeForEnoughBalance(arb);
+        }, this));
     },
 
     checkExchangeForEnoughBalance: function (arb) {
@@ -168,31 +168,20 @@ module.exports = {
     },
 
     calculateArbOpportunity: function (exchanges) {
-        var exArray = [],
-            arb,
-            arb2,
-            arrayOfArbs = [],
-            keys = _.keys(exchanges);
+        var arrayOfArbs = [],
+            arb;
 
-        //compare all exchanges prices from each exchange with each other
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var ex1 = exchanges[keys[i]];
-            for (var j = 0; j < len; j++) {
-                var ex2 = exchanges[keys[j]];
-                if (ex2.exchangeName !== ex1.exchangeName && !exArray[ex2.exchangeName]) {
+        _.each(exchanges, function(ex1) {
+            _.each(exchanges, function (ex2) {
+                if (ex2.exchangeName !== ex1.exchangeName) {
                     arb = this.calculateViability(ex1, ex2);
-                    arb2 = this.calculateViability(ex2, ex1);
 
                     if (arb) {
                         arrayOfArbs.push(arb);
                     }
-                    if (arb2) {
-                        arrayOfArbs.push(arb2);
-                    }
                 }
-            }
-            exArray[ex1.exchangeName] = true;
-        }
+            }, this);
+        }, this);
 
         return arrayOfArbs;
     },
