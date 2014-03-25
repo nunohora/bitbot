@@ -38,7 +38,8 @@ module.exports = {
     },
 
     bindEvents: function () {
-        emitter.on('balancesFetched', this.lookForPrices);
+        emitter.on('balancesFetched noArbFound', this.lookForPrices);
+        emitter.on('arbFound', this.makeTrade);
     },
 
     fetchBalances: function () {
@@ -54,54 +55,28 @@ module.exports = {
         });
     },
 
-    //WORK IN PROGRESS!
-    lookForPrices: function () {
-    },
+    lookForPrices: _.debounce(function () {
+        var self = this;
 
-    startLookingAtPrices: function () {
-        var self = this,
-            arb,
-            interval,
-            result;
+        var promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
+            return exchange.getExchangeInfo();
+        }, this);
 
-        var getExchangesInfo = function () {
-            if (self.canLookForPrices) {
-                self.canLookForPrices = false;
+        var group = all(promises).then(function () {
+            console.log('*** Finished Checking Exchange Prices *** '.blue);
 
-                console.log('*** Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
+            result = self.calculateArbOpportunity(self.getMarketsWithoutOpenOrders());
 
-                var promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
-                    return exchange.getExchangeInfo();
-                }, this);
+            arb = self.getBestArb(result);
 
-                var group = all(promises).then(function () {
-                    console.log('*** Finished Checking Exchange Prices *** '.blue);
-
-                    result = self.calculateArbOpportunity(self.getMarketsWithoutOpenOrders());
-
-                    //escaping the setInterval
-                    if (result.length) {
-                        arb = self.getBestArb(result);
-
-                        console.log('arb: ', arb);
-                        if (arb) {
-                            clearInterval(interval);
-
-                            self.makeTrade(arb);
-                        }
-                        else {
-                            self.canLookForPrices = true;
-                        }
-                    }
-                    else {
-                        self.canLookForPrices = true;
-                    }
-                });
+            if (arb) {
+                emitter.emit('arbFound', arb);
             }
-        };
-
-        interval = setInterval(getExchangesInfo, config.interval);
-    },
+            else {
+                emitter.emit('noArbFound');
+            }
+        });
+    }, config.interval);
 
     getBestArb: function (arrayOfArbs) {
         var orderedByProfit = utils.orderByProfit(arrayOfArbs),
