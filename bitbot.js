@@ -10,8 +10,6 @@ var colors      = require('colors'),
 
 module.exports = {
 
-    canLookForPrices: true,
-
     totalBalance: {},
 
     exchangeMarkets: {
@@ -37,7 +35,7 @@ module.exports = {
     },
 
     bindEvents: function () {
-        _.bindAll(this, 'lookForPrices', 'makeTrade');
+        _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges');
 
         emitter.on('balancesFetched', this.lookForPrices);
         emitter.on('noArbFound', this.lookForPrices);
@@ -86,7 +84,8 @@ module.exports = {
     }, config.interval),
 
     makeTrade: function (arb) {
-        var ex1 = arb.ex1,
+        var self = this,
+            ex1 = arb.ex1,
             ex2 = arb.ex2;
 
         console.log("\007");
@@ -99,7 +98,7 @@ module.exports = {
         this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
         this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
 
-        emitter.emit('tradeOrderCompleted', arb, this.totalBalance);
+        emitter.emit('tradeOrderCompleted', arb, this.getTotalBalanceInExchanges());
     },
 
     getBestArb: function (arrayOfArbs) {
@@ -125,17 +124,6 @@ module.exports = {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
             return false;
         }
-    },
-
-    checkOrderStatuses: function (ex1Name, ex2Name) {
-        console.log('checking exchanges statuses');
-
-        this.exchangeMarkets[ex1Name].startOrderCheckLoop();
-        this.exchangeMarkets[ex2Name].startOrderCheckLoop();
-
-        this.canLookForPrices = true;
-
-        this.start(config.market, config.tradeAmount);
     },
 
     calculateArbOpportunity: function (exchanges) {

@@ -20,8 +20,11 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
     },
 
     fetchBalance: function () {
@@ -37,8 +40,6 @@ module.exports = {
 
                     self.balances[idx] = +amount;
                 });
-
-                self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -96,12 +97,7 @@ module.exports = {
 
         btcchina.orderbook({market: market}, function (err, data) {
             if (!err) {
-                self.prices.sell.price = _.first(data.bids)[0];
-                self.prices.sell.quantity = _.first(data.asks)[1];
-
-                self.prices.buy.price = _.last(data.asks)[0];
-                self.prices.buy.quantity = _.last(data.bids)[1];
-
+                self.populatePrices(data);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {
@@ -123,17 +119,33 @@ module.exports = {
             self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
-        btceTrade.activeOrders({pair: market}, function (err, data) {
-            console.log('BTCE ORDER DATA: ', data);
+        btcchina.getOrders(true, function (err, data) {
+            console.log('BTCCHINA ORDER DATA: ', data);
 
-            if (!err && data.error === 'no orders') {
+            if (!err && _.isEmpty(data.result.orders)) {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                _.delay(emitter.emit, config.interval, 'orderMatched');
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 emitter.emit('orderNotMatched');
             }
         });
-    }, config.interval)
+    }, config.interval),
+
+    populatePrices: function (data) {
+        this.prices = {
+            buy: {
+                price: _.last(data.asks)[0],
+                quantity: _.last(data.bids)[1]
+            },
+            sell: {
+                price: _.first(data.bids)[0],
+                quantity: _.first(data.asks)[1]
+            }
+        };
+    }
 };

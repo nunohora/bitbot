@@ -20,8 +20,11 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
     },
 
     fetchBalance: function () {
@@ -39,8 +42,6 @@ module.exports = {
                         self.balances[index.toLowerCase()] = +balance['available'];
                     }
                 }, self);
-
-                self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -66,8 +67,12 @@ module.exports = {
         Cexio.place_order(type, amount, rate, config[this.exchangeName].marketMap[market] , function (err, data) {
             console.log('CEX.IO place order data: ', data);
             if (!err && data && !data.error) {
+                emitter.emit('orderCreated');
             }
             else {
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
     },
@@ -95,7 +100,6 @@ module.exports = {
         };
 
         console.log('Checking prices for '.yellow + this.exchangeName);
-
         Cexio.order_book(market, function (err, data) {
             if (!err) {
                 self.prices.buy.price = _.first(data.asks)[0];
@@ -128,7 +132,10 @@ module.exports = {
         Cexio.open_orders(market, function (err, data) {
             if (!err && _.isArray(data) && _.isEmpty(data)) {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                _.delay(emitter.emit, config.interval, 'orderMatched');
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);

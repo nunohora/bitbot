@@ -25,8 +25,11 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
     },
 
     fetchBalance: function () {
@@ -40,8 +43,6 @@ module.exports = {
                 _.each(data.result, function (balance, idx) {
                     self.balances[self.balancesMap[idx]] = +balance;
                 });
-
-                self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -61,8 +62,7 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred(),
-            newRate,
+        var newRate,
             newType,
             newAmount;
 
@@ -86,15 +86,15 @@ module.exports = {
         }, function (err, data) {
             if (!err && _.isEmpty(data.error)) {
                 console.log('KRAKEN resolved successfully!');
-                deferred.resolve(true);
+                emitter.emit('orderCreated');
             }
             else {
                 console.log('KRAKEN error on order: ', err);
-                deferred.resolve(false);
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
-
-        return deferred.promise;
     },
 
     calculateProfit: function (amount, decimals) {
@@ -156,7 +156,10 @@ module.exports = {
             console.log('KRAKEN OPEN ORDERS: ', data);
             if (!err && data && data['result'] && _.isEmpty(data['result'].open)) {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                _.delay(emitter.emit, config.interval, 'orderMatched');
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);

@@ -20,8 +20,11 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
     },
 
     fetchBalance: function () {
@@ -33,9 +36,6 @@ module.exports = {
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
-
-                self.hasOpenOrder = false;
-
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -64,8 +64,12 @@ module.exports = {
             amount: amount
         }, function (err, data) {
             if (!err && data.success === 1) {
+                emitter.emit('orderCreated');
             }
             else {
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
     },
@@ -123,11 +127,12 @@ module.exports = {
             market = config[this.exchangeName].marketMap[config.market];
 
         btceTrade.activeOrders({pair: market}, function (err, data) {
-            console.log('BTCE ORDER DATA: ', data);
-
             if (!err && data.error === 'no orders') {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                _.delay(emitter.emit, config.interval, 'orderMatched');
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);

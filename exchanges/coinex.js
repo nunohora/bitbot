@@ -20,8 +20,11 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
     },
 
     fetchBalance: function () {
@@ -35,8 +38,6 @@ module.exports = {
                 _.each(data.balances, function (balance) {
                     self.balances[balance['currency_name'].toLowerCase()] = +(balance['amount']/Math.pow(10, 8)).toFixed(8);
                 });
-
-                self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
@@ -67,9 +68,13 @@ module.exports = {
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
             if (!err && data && _.isEmpty(data.error)) {
+                emitter.emit('orderCreated');
             }
             else {
                 console.log(err);
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
     },
@@ -145,7 +150,10 @@ module.exports = {
 
             if (!err && data && _.isEmpty(data.orders)) {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                _.delay(emitter.emit, config.interval, 'orderMatched');
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
