@@ -46,7 +46,7 @@ FxBTC.prototype.getInfo = function(callback) {
     this._login({ username: self.username, password: self.password }, function (err, response) {
         if (!err) {
           self.token = response.token;
-          
+
           var url = self.urlPost + '?op=get_info&token=' + self.token;
 
           self.getHTTPS(url, callback);

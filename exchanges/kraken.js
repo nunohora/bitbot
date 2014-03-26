@@ -3,7 +3,9 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
-    KrakenClient    = require('kraken-api');
+    KrakenClient    = require('kraken-api'),
+    events      = require('events'),
+    emitter     = new events.EventEmitter();
 
 var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret);
 
@@ -21,6 +23,11 @@ module.exports = {
     },
 
     hasOpenOrder: false,
+
+    initialize: function () {
+        emitter.on('orderNotMatched', this.checkOrderStatus);
+        emitter.on('orderMatched', this.fetchBalance);
+    },
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -59,30 +66,15 @@ module.exports = {
             newType,
             newAmount;
 
-        console.log('Old Rate: ', rate);
-        console.log('Old amount: ', amount);
-
         //ugly ugly
         if (config.market === 'LTC_BTC') {
             newType = type === 'buy' ? 'sell' : 'buy';
             newRate = (1/rate).toFixed(5);
-
-            // newAmount = (amount/newRate).toFixed(8);
         }
 
         this.hasOpenOrder = true;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        console.log('KRAKEN ORDER');
-        console.log({
-            pair: config[this.exchangeName].marketMap[market],
-            type: newType,
-            ordertype: 'limit',
-            price: newRate,
-            volume: amount,
-            oflags: 'viqc'
-        });
 
         kraken.api('AddOrder', {
             pair: config[this.exchangeName].marketMap[market],
@@ -92,16 +84,12 @@ module.exports = {
             volume: amount,
             oflags: 'viqc'
         }, function (err, data) {
-            console.log('KRAKEN ORDER RESPONSE!!');
-            console.log('err: ', err);
-            console.log('data: ', data);
-
             if (!err && _.isEmpty(data.error)) {
                 console.log('KRAKEN resolved successfully!');
                 deferred.resolve(true);
             }
             else {
-                console.log('KRAKEN error on order!');
+                console.log('KRAKEN error on order: ', err);
                 deferred.resolve(false);
             }
         });
@@ -161,26 +149,19 @@ module.exports = {
         return deferred.promise;
     },
 
-    startOrderCheckLoop: function () {
-        var self = this,
-            interval;
+    checkOrderStatus: _.debounce(function () {
+        var self = this;
 
-        checkOrderStatus = function () {
-            kraken.api('OpenOrders', null, function (err, data) {
-                console.log('KRAKEN OPEN ORDERS: ', data);
-                if (!err && data && data['result'] && _.isEmpty(data['result'].open)) {
-                    self.hasOpenOrder = false;
-                    self.fetchBalance();
-
-                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                    clearInterval(interval);
-                }
-                else {
-                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                }
-            });
-        };
-
-        interval = setInterval(checkOrderStatus, config.interval);
-    }
+        kraken.api('OpenOrders', null, function (err, data) {
+            console.log('KRAKEN OPEN ORDERS: ', data);
+            if (!err && data && data['result'] && _.isEmpty(data['result'].open)) {
+                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                _.delay(emitter.emit, config.interval, 'orderMatched');
+            }
+            else {
+                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+                emitter.emit('orderNotMatched');
+            }
+        });
+    }, config.interval)
 };

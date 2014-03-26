@@ -3,7 +3,9 @@ var colors      = require('colors'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
     CoinEX        = require('../coinex'),
-    utils       = require('../utils');
+    utils       = require('../utils'),
+    events      = require('events'),
+    emitter     = new events.EventEmitter();
 
 var coinex = new CoinEX(config['coinex'].apiKey, config['coinex'].secret);
 
@@ -16,6 +18,11 @@ module.exports = {
     prices: {},
 
     hasOpenOrder: false,
+
+    initialize: function () {
+        emitter.on('orderNotMatched', this.checkOrderStatus);
+        emitter.on('orderMatched', this.fetchBalance);
+    },
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -48,11 +55,7 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
-
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        // amount = 0;
 
         this.hasOpenOrder = true;
 
@@ -64,15 +67,11 @@ module.exports = {
         }, function (err, data) {
             console.log('COINEX DATA:, ', data);
             if (!err && data && _.isEmpty(data.error)) {
-                deferred.resolve(true);
             }
             else {
                 console.log(err);
-                deferred.resolve(false);
             }
         });
-
-        return deferred.promise;
     },
 
     calculateProfit: function (amount, decimals) {
@@ -137,27 +136,21 @@ module.exports = {
         return deferred.promise;
     },
 
-    startOrderCheckLoop: function () {
-        var self = this,
-            interval;
+    checkOrderStatus: _.debounce(function () {
+        var market = config[self.exchangeName].marketMap[config.market],
+            self = this;
 
-        var checkOrderStatus = function () {
-            var market = config[self.exchangeName].marketMap[config.market];
+        coinex.activeOrders({pair: market}, function (err, data) {
+            console.log('COINEX DATA ORDER:, ', data);
 
-            coinex.activeOrders({pair: market}, function (err, data) {
-                console.log('COINEX DATA ORDER:, ', data);
-
-                if (!err && data && _.isEmpty(data.orders)) {
-                    self.fetchBalance();
-                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                    clearInterval(interval);
-                }
-                else {
-                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                }
-            });
-        };
-
-        interval = setInterval(checkOrderStatus, config.interval);
-    }
+            if (!err && data && _.isEmpty(data.orders)) {
+                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                _.delay(emitter.emit, config.interval, 'orderMatched');
+            }
+            else {
+                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+                emitter.emit('orderNotMatched');
+            }
+        });
+    }, config.interval)
 };

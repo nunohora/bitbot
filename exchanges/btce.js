@@ -3,7 +3,9 @@ var colors      = require('colors'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
     BTCE        = require('btce'),
-    utils       = require('../utils');
+    utils       = require('../utils'),
+    events      = require('events'),
+    emitter     = new events.EventEmitter();
 
 var btceTrade = new BTCE(config['btce'].apiKey, config['btce'].secret);
 
@@ -16,6 +18,11 @@ module.exports = {
     prices: {},
 
     hasOpenOrder: false,
+
+    initialize: function () {
+        emitter.on('orderNotMatched', this.checkOrderStatus);
+        emitter.on('orderMatched', this.fetchBalance);
+    },
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -46,11 +53,7 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
-
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
-
-        // amount = 0;
 
         this.hasOpenOrder = true;
 
@@ -61,14 +64,10 @@ module.exports = {
             amount: amount
         }, function (err, data) {
             if (!err && data.success === 1) {
-                deferred.resolve(true);
             }
             else {
-                deferred.resolve(false);
             }
         });
-
-        return deferred.promise;
     },
 
     calculateProfit: function (amount, decimals) {
@@ -118,29 +117,22 @@ module.exports = {
         return deferred.promise;
     },
 
-    startOrderCheckLoop: function () {
-        var self = this,
-            interval;
+    checkOrderStatus: _.debounce(function () {
+        var deferred = new Deferred(),
+            self = this,
+            market = config[this.exchangeName].marketMap[config.market];
 
-        var checkOrderStatus = function () {
-            var deferred = new Deferred(),
-                market = config[self.exchangeName].marketMap[config.market];
+        btceTrade.activeOrders({pair: market}, function (err, data) {
+            console.log('BTCE ORDER DATA: ', data);
 
-            btceTrade.activeOrders({pair: market}, function (err, data) {
-                console.log('BTCE ORDER DATA: ', data);
-
-                if (!err && data.error === 'no orders') {
-                    self.fetchBalance();
-
-                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                    clearInterval(interval);
-                }
-                else {
-                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                }
-            });
-        };
-
-        interval = setInterval(checkOrderStatus, config.interval);
-    }
+            if (!err && data.error === 'no orders') {
+                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                _.delay(emitter.emit, config.interval, 'orderMatched');
+            }
+            else {
+                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+                emitter.emit('orderNotMatched');
+            }
+        });
+    }, config.interval)
 };

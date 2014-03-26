@@ -2,8 +2,10 @@ var colors      = require('colors'),
     _           = require('underscore'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
-    Cexio        = require('cexio'),
-    utils       = require('../utils');
+    Cexio       = require('cexio'),
+    utils       = require('../utils'),
+    events      = require('events'),
+    emitter     = new events.EventEmitter();
 
 var cexio = Cexio.create(config['cexio'].username, config['cexio'].apiKey, config['cexio'].secret);
 
@@ -16,6 +18,11 @@ module.exports = {
     prices: {},
 
     hasOpenOrder: false,
+
+    initialize: function () {
+        emitter.on('orderNotMatched', this.checkOrderStatus);
+        emitter.on('orderMatched', this.fetchBalance);
+    },
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -52,8 +59,6 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var deferred = new Deferred();
-
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         this.hasOpenOrder = true;
@@ -61,14 +66,10 @@ module.exports = {
         Cexio.place_order(type, amount, rate, config[this.exchangeName].marketMap[market] , function (err, data) {
             console.log('CEX.IO place order data: ', data);
             if (!err && data && !data.error) {
-                deferred.resolve(true);
             }
             else {
-                deferred.resolve(false);
             }
         });
-
-        return deferred.promise;
     },
 
     calculateProfit: function (amount, decimals) {
@@ -119,29 +120,20 @@ module.exports = {
         return deferred.promise;
     },
 
-    startOrderCheckLoop: function () {
-        var self = this,
-            interval;
+    checkOrderStatus: _.debounce(function () {
+        var deferred = new Deferred(),
+            self = this,
+            market = config[this.exchangeName].marketMap[config.market];
 
-        var checkOrderStatus = function () {
-            var deferred = new Deferred(),
-                market = config[self.exchangeName].marketMap[config.market];
-
-            Cexio.open_orders(market, function (err, data) {
-                console.log('CEX.IO ORDER DATA: ', data);
-
-                if (!err && _.isArray(data) && _.isEmpty(data)) {
-                    self.fetchBalance();
-
-                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                    clearInterval(interval);
-                }
-                else {
-                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                }
-            });
-        };
-
-        interval = setInterval(checkOrderStatus, config.interval);
-    }
+        Cexio.open_orders(market, function (err, data) {
+            if (!err && _.isArray(data) && _.isEmpty(data)) {
+                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                _.delay(emitter.emit, config.interval, 'orderMatched');
+            }
+            else {
+                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+                emitter.emit('orderNotMatched');
+            }
+        });
+    }, config.interval)
 };

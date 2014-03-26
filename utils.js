@@ -1,6 +1,7 @@
-var config = require('./config');
-var _ = require('underscore');
-var nodemailer = require('nodemailer');
+var config      = require('./config'),
+    _           = require('underscore'),
+    fs          = require('fs'),
+    nodemailer  = require('nodemailer');
 
 module.exports = {
 
@@ -83,7 +84,14 @@ module.exports = {
         });
     },
 
-    sendMail: function (text) {
+    registerTrade: function (arb, totalBalances) {},
+
+    sendMail: function (arb, totalBalances) {
+        var text = JSON.stringify({
+            arb: arb,
+            totalBalances: totalBalances
+        });
+
         var smtpTransport = nodemailer.createTransport("SMTP",{
             service: "Gmail",
             auth: {

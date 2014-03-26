@@ -1,11 +1,12 @@
-var colors = require('colors'),
-    config = require('./config'),
-    _ = require('underscore'),
-    when = require('promised-io/promise').when,
-    all = require('promised-io/promise').all,
-    utils = require('./utils'),
-    Deferred = require("promised-io/promise").Deferred,
-    emitter = require('events').EventEmitter;
+var colors      = require('colors'),
+    config      = require('./config'),
+    _           = require('underscore'),
+    when        = require('promised-io/promise').when,
+    all         = require('promised-io/promise').all,
+    utils       = require('./utils'),
+    Deferred    = require("promised-io/promise").Deferred,
+    events      = require('events'),
+    emitter     = new events.EventEmitter();
 
 module.exports = {
 
@@ -18,8 +19,8 @@ module.exports = {
         'btce': require('./exchanges/btce'),
         'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
-        // 'coinex': require('./exchanges/coinex'),
         'btcchina': require('./exchanges/btcchina')
+        // 'coinex': require('./exchanges/coinex'),
         // 'cryptsy': require('./exchanges/cryptsy'),
         // 'vircurex': require('./exchanges/vircurex'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
@@ -27,22 +28,33 @@ module.exports = {
     },
 
     initialize: function (marketName, tradeAmount) {
-        var self = this;
-
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
         this.bindEvents();
-
+        this.initializeExchanges();
         this.fetchBalances();
     },
 
     bindEvents: function () {
-        emitter.on('balancesFetched noArbFound', this.lookForPrices);
+        _.bindAll(this, 'lookForPrices', 'makeTrade');
+
+        emitter.on('balancesFetched', this.lookForPrices);
+        emitter.on('noArbFound', this.lookForPrices);
+        emitter.on('tradeOrderCompleted', this.lookForPrices);
+        emitter.on('tradeOrderCompleted', utils.sendMail);
         emitter.on('arbFound', this.makeTrade);
     },
 
+    initializeExchanges: function () {
+        _.each(this.exchangeMarkets, function (exchange) {
+            exchange.initialize();
+        }, this);
+    },
+
     fetchBalances: function () {
+        var self = this;
+
         promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
             return exchange.fetchBalance();
         }, this);
@@ -69,20 +81,31 @@ module.exports = {
 
             arb = self.getBestArb(result);
 
-            if (arb) {
-                emitter.emit('arbFound', arb);
-            }
-            else {
-                emitter.emit('noArbFound');
-            }
+            arb ? emitter.emit('arbFound', arb) : emitter.emit('noArbFound');
         });
-    }, config.interval);
+    }, config.interval),
+
+    makeTrade: function (arb) {
+        var ex1 = arb.ex1,
+            ex2 = arb.ex2;
+
+        console.log("\007");
+        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
+        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.name);
+        console.log('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
+        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+
+        this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
+        this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
+
+        emitter.emit('tradeOrderCompleted', arb, this.totalBalance);
+    },
 
     getBestArb: function (arrayOfArbs) {
         var orderedByProfit = utils.orderByProfit(arrayOfArbs),
             currArb;
 
-        console.log('ordered by profit');
         return _.first(_.filter(orderedByProfit, function (arb) {
             return this.checkExchangeForEnoughBalance(arb);
         }, this));
@@ -102,33 +125,6 @@ module.exports = {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
             return false;
         }
-    },
-
-    makeTrade: function (arb) {
-        var self = this,
-            ex1 = arb.ex1,
-            ex2 = arb.ex2;
-
-        console.log("\007");
-        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
-        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.name);
-        console.log('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
-        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-
-        var group = all(
-            self.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount),
-            self.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount)
-        ).then(function (response) {
-            utils.sendMail(JSON.stringify({
-                arb: arb,
-                totalBalance: self.totalBalance
-            }));
-
-            if (response[0] && response[1]) {
-                self.checkOrderStatuses(ex1.name, ex2.name);
-            }
-        });
     },
 
     checkOrderStatuses: function (ex1Name, ex2Name) {
