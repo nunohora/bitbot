@@ -86,7 +86,7 @@ module.exports = {
     },
 
     registerTrade: function (arb, totalBalances) {
-        // this.writeToFile(arb, totalBalances);
+        this.writeToFile(arb, totalBalances);
 
         this.sendMail(this.createChart());
     },
@@ -112,23 +112,32 @@ module.exports = {
 
         var result = {
             ltc: {
-                x: [],
-                values: []
+                chart: {
+                    x: [],
+                    values: []
+                },
+                totalProfit: 0
             },
             btc: {
-                x: [],
-                values: []
+                chart: {
+                    x: [],
+                    values: []
+                },
+                totalProfit: 0
             }
         };
 
         _.each(arbs, function (arb) {
             obj = JSON.parse(arb);
 
-            result.ltc.x.push(obj.timestamp);
-            result.ltc.values.push(obj.totalBalances.ltc.toFixed(8));
-            result.btc.x.push(obj.timestamp);
-            result.btc.values.push(obj.totalBalances.btc.toFixed(8));
+            result.ltc.chart.x.push(obj.timestamp);
+            result.ltc.chart.values.push(obj.totalBalances.ltc.toFixed(8));
+            result.btc.chart.x.push(obj.timestamp);
+            result.btc.chart.values.push(obj.totalBalances.btc.toFixed(8));
         }, this);
+
+        result.ltc.totalProfit = (JSON.parse(_.last(arbs))['totalBalances'].ltc - JSON.parse(_.first(arbs))['totalBalances'].ltc).toFixed(8);
+        result.btc.totalProfit = (JSON.parse(_.last(arbs))['totalBalances'].btc - JSON.parse(_.first(arbs))['totalBalances'].btc).toFixed(8);
 
         return result;
     },
@@ -138,7 +147,7 @@ module.exports = {
             imageUrls = [],
             graphData = this.processFileData();
 
-        _.each(graphData, function (coinData, idx) {
+        _.each(graphData.chart, function (coinData, idx) {
             chart = Quiche('line');
 
             chart.setTitle('Bot Progress');
