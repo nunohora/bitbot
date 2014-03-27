@@ -86,7 +86,7 @@ module.exports = {
     },
 
     registerTrade: function (arb, totalBalances) {
-        this.writeToFile(arb, totalBalances);
+        // this.writeToFile(arb, totalBalances);
 
         this.sendMail(this.createChart());
     },
@@ -111,54 +111,68 @@ module.exports = {
             obj;
 
         var result = {
-            x: [],
-            ltc: [],
-            btc: []
+            ltc: {
+                x: [],
+                values: []
+            },
+            btc: {
+                x: [],
+                values: []
+            }
         };
 
         _.each(arbs, function (arb) {
             obj = JSON.parse(arb);
-            result.x.push(new Date(obj.timestamp));
-            result.ltc.push(obj.totalBalances.ltc);
-            result.btc.push(obj.totalBalances.btc);
+
+            result.ltc.x.push(obj.timestamp);
+            result.ltc.values.push(obj.totalBalances.ltc.toFixed(8));
+            result.btc.x.push(obj.timestamp);
+            result.btc.values.push(obj.totalBalances.btc.toFixed(8));
         }, this);
 
         return result;
     },
 
     createChart: function () {
-        var chart = Quiche('line'),
-            imageUrl,
+        var chart,
+            imageUrls = [],
             graphData = this.processFileData();
 
-        chart.setTitle('Bot Progress');
-        chart.addData(graphData.ltc, 'LTC', '848482');
-        chart.addData(graphData.btc, 'BTC', 'FFFF00');
-        chart.addAxisLabels('time', graphData.x);
-        chart.setAutoScaling();
-        chart.setTransparentBackground();
+        _.each(graphData, function (coinData, idx) {
+            chart = Quiche('line');
 
-        imageUrl = chart.getUrl(true); // First param controls http vs. https
+            chart.setTitle('Bot Progress');
+            chart.addData(coinData.values, idx, '848482');
+            chart.addAxisLabels('time', coinData.x);
+            chart.setAutoScaling();
+            chart.setTransparentBackground();
 
-        console.log('imageUrl: ', imageUrl);
+            imageUrls.push(chart.getUrl(true));
+        }, this);
 
-        return imageUrl;
+        return imageUrls;
     },
 
-    sendMail: function (chartUrl) {
+    sendMail: function (chartUrls) {
         var smtpTransport = nodemailer.createTransport("SMTP",{
             service: "Gmail",
             auth: {
                 user: config.email.username,
                 pass: config.email.password
-            }
+            },
         });
+
+        var html = '';
+
+        _.each(chartUrls, function (url) {
+            html += '<img src="' + url + '" />';
+        }, this);
 
         var mailOptions = {
             from: "Bitbot <bitbot_message@gmail.com>", // sender address
             to: "nunohora@gmail.com", // list of receivers
             subject: "New trade", // Subject line
-            html: '<img src="' + chartUrl + '" />'
+            html: html
         };
 
         smtpTransport.sendMail(mailOptions, function(error, response){

@@ -36,6 +36,7 @@ module.exports = {
 
     bindEvents: function () {
         _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges');
+        _.bindAll(utils, 'registerTrade');
 
         emitter.on('balancesFetched', this.lookForPrices);
         emitter.on('noArbFound', this.lookForPrices);
