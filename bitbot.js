@@ -40,7 +40,7 @@ module.exports = {
         emitter.on('balancesFetched', this.lookForPrices);
         emitter.on('noArbFound', this.lookForPrices);
         emitter.on('tradeOrderCompleted', this.lookForPrices);
-        emitter.on('tradeOrderCompleted', utils.sendMail);
+        emitter.on('tradeOrderCompleted', utils.registerTrade);
         emitter.on('arbFound', this.makeTrade);
     },
 

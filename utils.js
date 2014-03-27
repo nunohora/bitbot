@@ -1,6 +1,7 @@
 var config      = require('./config'),
     _           = require('underscore'),
     fs          = require('fs'),
+    Quiche      = require('quiche'),
     nodemailer  = require('nodemailer');
 
 module.exports = {
@@ -84,14 +85,67 @@ module.exports = {
         });
     },
 
-    registerTrade: function (arb, totalBalances) {},
+    registerTrade: function (arb, totalBalances) {
+        this.writeToFile(arb, totalBalances);
 
-    sendMail: function (arb, totalBalances) {
-        var text = JSON.stringify({
+        this.sendMail(this.createChart());
+    },
+
+    writeToFile: function (arb, totalBalances) {
+        var obj = JSON.stringify({
             arb: arb,
-            totalBalances: totalBalances
+            totalBalances: totalBalances,
+            timestamp: Date.now()
         });
 
+        fs.appendFile('./tradeLog.log','%' + obj, function (err) {
+            if (err) {
+                console.log('error writing to file: ', err);
+            }
+        });
+    },
+
+    processFileData: function () {
+        var file = fs.readFileSync('./tradeLog.log', {encoding: 'utf8'}),
+            arbs = _.rest(file.split('%')),
+            obj;
+
+        var result = {
+            x: [],
+            ltc: [],
+            btc: []
+        };
+
+        _.each(arbs, function (arb) {
+            obj = JSON.parse(arb);
+            result.x.push(new Date(obj.timestamp));
+            result.ltc.push(obj.totalBalances.ltc);
+            result.btc.push(obj.totalBalances.btc);
+        }, this);
+
+        return result;
+    },
+
+    createChart: function () {
+        var chart = Quiche('line'),
+            imageUrl,
+            graphData = this.processFileData();
+
+        chart.setTitle('Bot Progress');
+        chart.addData(graphData.ltc, 'LTC', '848482');
+        chart.addData(graphData.btc, 'BTC', 'FFFF00');
+        chart.addAxisLabels('time', graphData.x);
+        chart.setAutoScaling();
+        chart.setTransparentBackground();
+
+        imageUrl = chart.getUrl(true); // First param controls http vs. https
+
+        console.log('imageUrl: ', imageUrl);
+
+        return imageUrl;
+    },
+
+    sendMail: function (chartUrl) {
         var smtpTransport = nodemailer.createTransport("SMTP",{
             service: "Gmail",
             auth: {
@@ -104,7 +158,7 @@ module.exports = {
             from: "Bitbot <bitbot_message@gmail.com>", // sender address
             to: "nunohora@gmail.com", // list of receivers
             subject: "New trade", // Subject line
-            text: text // plaintext body
+            html: '<img src="' + chartUrl + '" />'
         };
 
         smtpTransport.sendMail(mailOptions, function(error, response){
