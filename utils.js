@@ -1,7 +1,6 @@
 var config      = require('./config'),
     _           = require('underscore'),
     fs          = require('fs'),
-    Quiche      = require('quiche'),
     nodemailer  = require('nodemailer');
 
 module.exports = {

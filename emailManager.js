@@ -9,45 +9,45 @@ var fs          = require('fs'),
 
 module.exports = {
 
-    // processFileData: function () {
-    //     var file = fs.readFileSync('./tradeLog.log', {encoding: 'utf8'}),
-    //         arbs = _.rest(file.split('%')),
-    //         obj;
+    processFileData: function () {
+        var file = fs.readFileSync('./tradeLog.log', {encoding: 'utf8'}),
+            arbs = _.rest(file.split('%')),
+            obj;
 
-    //     var result = {
-    //         ltc: [],
-    //         btc: [],
-    //         x: []
-    //     };
+        var result = {
+            ltc: [],
+            btc: [],
+            x: []
+        };
 
-    //     _.each(arbs, function (arb) {
-    //         obj = JSON.parse(arb);
+        _.each(arbs, function (arb) {
+            obj = JSON.parse(arb);
 
-    //         result.x.push(obj.timestamp);
-    //         result.ltc.push(obj.totalBalances.ltc.toFixed(8));
-    //         result.btc.push(obj.totalBalances.btc.toFixed(8));
-    //     }, this);
+            result.x.push(obj.timestamp);
+            result.ltc.push(obj.totalBalances.ltc.toFixed(8));
+            result.btc.push(obj.totalBalances.btc.toFixed(8));
+        }, this);
 
-    //     return result;
-    // },
+        return result;
+    },
 
-    // createChart: function () {
-    //     var data = this.processFileData(),
-    //         chartNode = window.document.querySelector('#chart');
+    createChart: function () {
+        var data = this.processFileData(),
+            chartNode = window.document.querySelector('#chart');
 
-    //     this.prepareChartData(chartNode, data.btc);
+        this.prepareChartData(chartNode, data.btc);
 
-    //     var svgGraph = d3.select(chartNode)
-    //         .attr('xmlns', 'http://www.w3.org/2000/svg');
+        var svgGraph = d3.select(chartNode)
+            .attr('xmlns', 'http://www.w3.org/2000/svg');
 
-    //     console.log(window.document.innerHTML);
-    //     var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
+        console.log(window.document.innerHTML);
+        var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
 
-    //     fs.writeFileSync('html.html', window.document.innerHTML);
-    //     fs.writeFileSync('graph.svg', svgXML);
+        fs.writeFileSync('html.html', window.document.innerHTML);
+        fs.writeFileSync('graph.svg', svgXML);
 
-    //     // this.sendMail(window.document.innerHTML);
-    // },
+        // this.sendMail(window.document.innerHTML);
+    },
 
     prepareChartData: function(svgNode, data) {
         var w = 400,
