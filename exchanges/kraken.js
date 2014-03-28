@@ -25,7 +25,7 @@ module.exports = {
     hasOpenOrder: false,
 
     initialize: function () {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance');
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
