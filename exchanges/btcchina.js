@@ -58,19 +58,18 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
+        var mkt = config[this.exchangeName].marketMap[market];
+
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         this.hasOpenOrder = true;
 
-        // btcchina.createOrder(type,
-        // }, function (err, data) {
-        //     if (!err && data.success === 1) {
-        //         deferred.resolve(true);
-        //     }
-        //     else {
-        //         deferred.resolve(false);
-        //     }
-        // });
+        btcchina.createOrder(mkt, type, rate, amount, function (err, data) {
+            if (!err && data.success === 1) {
+            }
+            else {
+            }
+        });
     },
 
     calculateProfit: function (amount, decimals) {
@@ -95,7 +94,7 @@ module.exports = {
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        btcchina.orderbook({market: market}, function (err, data) {
+        btcchina.getMarketDepth2(null, market, function (err, data) {
             if (!err) {
                 self.populatePrices(data);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
@@ -137,14 +136,16 @@ module.exports = {
     }, config.interval),
 
     populatePrices: function (data) {
+        data = data.result.market_depth;
+
         this.prices = {
             buy: {
-                price: _.last(data.asks)[0],
-                quantity: _.last(data.bids)[1]
+                price: _.first(data.ask).price,
+                quantity: _.first(data.ask).amount
             },
             sell: {
-                price: _.first(data.bids)[0],
-                quantity: _.first(data.asks)[1]
+                price: _.first(data.bid).price,
+                quantity: _.first(data.bid).amount
             }
         };
     }

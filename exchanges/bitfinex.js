@@ -67,7 +67,7 @@ module.exports = {
         this.hasOpenOrder = true;
 
         bitfinex.new_order(mkt, amount, rate, 'all', type, 'exchange limit', function (err, data) {
-            console.log('bitfinex orderId:', data['order_id']);
+            console.log('bitfinex orderId:', data);
 
             if (!err && data['order_id']) {
                 emitter.emit('orderCreated');

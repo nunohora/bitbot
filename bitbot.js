@@ -30,8 +30,11 @@ module.exports = {
         config.tradeAmount = +tradeAmount;
 
         this.bindEvents();
-        this.initializeExchanges();
-        this.fetchBalances();
+
+        this.exchangeMarkets['btcchina'].getExchangeInfo();
+        // this.exchangeMarkets['btcchina'].createOrder('LTC_BTC', 'buy', '0.01', 1);
+        // this.initializeExchanges();
+        // this.fetchBalances();
     },
 
     bindEvents: function () {
