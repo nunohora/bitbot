@@ -142,7 +142,7 @@ module.exports = {
     },
 
     checkOrderStatus: _.debounce(function () {
-        var market = config[self.exchangeName].marketMap[config.market],
+        var market = config[this.exchangeName].marketMap[config.market],
             self = this;
 
         coinex.activeOrders({pair: market}, function (err, data) {
