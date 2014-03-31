@@ -17,8 +17,8 @@ module.exports = {
         'btce': require('./exchanges/btce'),
         'bitfinex': require('./exchanges/bitfinex'),
         'kraken': require('./exchanges/kraken'),
-        'btcchina': require('./exchanges/btcchina')
-        // 'coinex': require('./exchanges/coinex'),
+        'coinex': require('./exchanges/coinex')
+        // 'btcchina': require('./exchanges/btcchina')
         // 'cryptsy': require('./exchanges/cryptsy'),
         // 'vircurex': require('./exchanges/vircurex'),
         // 'crypto-trade': require('./exchanges/crypto-trade'),
