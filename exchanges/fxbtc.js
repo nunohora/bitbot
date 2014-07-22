@@ -2,7 +2,7 @@ var colors = require('colors');
 var config = require('./../config');
 var _ = require('underscore');
 
-var FxBTC = require('../fxbtc'),
+var FxBTC = require('../node_modules/fxbtc/fxbtc'),
     fxBTC = new FxBTC(config['fxbtc'].username, config['fxbtc'].password),
     Deferred = require("promised-io/promise").Deferred,
     utils = require('../utils');

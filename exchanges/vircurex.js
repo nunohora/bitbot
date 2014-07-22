@@ -5,7 +5,9 @@ var colors          = require('colors'),
     utils           = require('../utils'),
     when            = require('promised-io/promise').when,
     _               = require('underscore'),
-    Vircurex        = require('vircurex');
+    Vircurex        = require('vircurex'),
+    events          = require('events'),
+    emitter         = new events.EventEmitter();
 
 var vircurex = new Vircurex(config.vircurex.username, {
 		'getBalance': config.vircurex.apiKey,
@@ -27,6 +29,14 @@ module.exports = {
     prices: {},
 
     hasOpenOrder: false,
+
+    initialize: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
+        emitter.on('orderNotMatched', this.checkOrderStatus);
+        emitter.on('orderMatched', this.fetchBalance);
+        emitter.on('orderCreated', this.checkOrderStatus);
+        emitter.on('orderNotCreated', this.createOrder);
+    },
 
     fetchBalance: function () {
         var deferred = new Deferred(),
@@ -80,44 +90,38 @@ module.exports = {
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
-        // amount = 0;
-
         this.hasOpenOrder = true;
 
         vircurex.createOrder(type, amount, currency1, rate, currency2, function (err, data) {
             if (!err) {
-                when(self._releaseOrder(data.orderid)).then(function (response) {
-                    console.log('VIRCUREX RELEASE ORDER RESPONSE', response);
-
-                    self.openOrderId = response.orderid;
-
-                    deferred.resolve(response);
-                });
+                self._releaseOrder(data.orderid, { market: market, type: type, rate: rate, amount: amount });
             }
             else {
                 console.log(err);
-                deferred.reject(err);
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
-
-        return deferred.promise;
     },
 
-    _releaseOrder: function (orderId) {
+    _releaseOrder: function (orderId, orderData) {
         var deferred = new Deferred(),
             self = this;
 
         vircurex.releaseOrder(orderId, function (err, data) {
             if (!err) {
-                deferred.resolve(data);
+                console.log('VIRCUREX RELEASE ORDER RESPONSE', data);
+                self.openOrderId = data.orderid;
+                emitter.emit('orderCreated');
             }
             else {
                 console.log(err);
-                deferred.reject(err);
+                _.delay(function () {
+                    emitter.emit('orderNotCreated', orderData.market, orderData.type, orderData.rate, orderData.amount);
+                }, config.interval);
             }
         });
-
-        return deferred.promise;
     },
 
     getExchangeInfo: function () {
@@ -158,30 +162,24 @@ module.exports = {
         return deferred.promise;
     },
 
-    startOrderCheckLoop: function () {
+    checkOrderStatus: _.debounce(function () {
         var self = this,
             interval;
 
-        console.log('chegou aqui');
+        vircurex.readOrders(1, function (err, data) {
+            console.log('Vircurex ORDER DATA');
+            console.log(data);
 
-        var checkOrderStatus = function () {
-            vircurex.readOrders(1, function (err, data) {
-                console.log('Vircurex ORDER DATA');
-                console.log(data);
-
-                if (!err && data.numberorders === 0) {
-                    console.log('VIRCUREX ORDER CLEARED!');
-                    self.fetchBalance();
-
-                    console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
-                    clearInterval(interval);
-                }
-                else {
-                    console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                }
-            });
-        };
-
-        interval = setInterval(checkOrderStatus, config.interval);
-    }
+            if (!err && data.numberorders === 0) {
+                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                _.delay(function () {
+                    self.hasOpenOrder = false;
+                    emitter.emit('orderMatched');
+                }, config.interval);
+            }
+            else {
+                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+            }
+        });
+    }, config.interval)
 };

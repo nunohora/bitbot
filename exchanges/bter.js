@@ -3,7 +3,7 @@ var colors      = require('colors'),
     _           = require('underscore'),
     Deferred    = require("promised-io/promise").Deferred,
     utils       = require('../utils'),
-    Bter        = require('../bter');
+    Bter        = require('../node_modules/bter/bter');
 
 var bter = new Bter(config['bter'].apiKey, config['bter'].secret);
 
@@ -127,7 +127,7 @@ module.exports = {
         var deferred = new Deferred(),
             self = this,
             result;
-        
+
         bter.getOrderList(function (err, data) {
             console.log('BTER ORDER DATA: ', data);
 

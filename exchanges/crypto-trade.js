@@ -3,7 +3,7 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
-    CryptoTrade     = require('../crypto-trade');
+    CryptoTrade     = require('../node_modules/crypto-trade/crypto-trade');
 
 var cryptoTrade = new CryptoTrade(config['crypto-trade'].apiKey, config['crypto-trade'].secret);
 

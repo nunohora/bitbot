@@ -5,6 +5,7 @@ var colors      = require('colors'),
     all         = require('promised-io/promise').all,
     utils       = require('./utils'),
     Deferred    = require("promised-io/promise").Deferred,
+    db          = require('./db'),
     events      = require('events'),
     emitter     = new events.EventEmitter();
 
@@ -13,22 +14,19 @@ module.exports = {
     totalBalance: {},
 
     exchangeMarkets: {
-        'cexio': require('./exchanges/cexio'),
-        'btce': require('./exchanges/btce'),
-        'bitfinex': require('./exchanges/bitfinex'),
-        'kraken': require('./exchanges/kraken'),
-        'coinex': require('./exchanges/coinex')
-        // 'btcchina': require('./exchanges/btcchina')
-        // 'cryptsy': require('./exchanges/cryptsy'),
-        // 'vircurex': require('./exchanges/vircurex'),
-        // 'crypto-trade': require('./exchanges/crypto-trade'),
-        // 'coins-e': require('./exchanges/coins-e'),
+        'cexio'     : require('./exchanges/cexio'),
+        'btce'      : require('./exchanges/btce'),
+        'bitfinex'  : require('./exchanges/bitfinex'),
+        'kraken'    : require('./exchanges/kraken'),
+        'btcchina'  : require('./exchanges/btcchina'),
+        'vircurex': require('./exchanges/vircurex')
     },
 
     initialize: function (marketName, tradeAmount) {
         config.market = marketName;
         config.tradeAmount = +tradeAmount;
 
+        db.initialize();
         this.bindEvents();
         this.initializeExchanges();
         this.fetchBalances();

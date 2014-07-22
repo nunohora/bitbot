@@ -2,7 +2,7 @@ var colors      = require('colors'),
     _           = require('underscore'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
-    Coinse        = require('../coins-e'),
+    Coinse        = require('../node_modules/coins-e/coins-e'),
     utils       = require('../utils');
 
 var coinse = new Coinse(config['coins-e'].apiKey, config['coins-e'].secret);

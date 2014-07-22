@@ -123,8 +123,7 @@ module.exports = {
     },
 
     checkOrderStatus: _.debounce(function () {
-        var deferred = new Deferred(),
-            self = this,
+        var self = this,
             market = config[this.exchangeName].marketMap[config.market];
 
         bitfinex.active_orders(function (err, data) {
