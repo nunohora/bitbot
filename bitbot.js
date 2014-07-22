@@ -29,7 +29,13 @@ module.exports = {
         db.initialize();
         this.bindEvents();
         this.initializeExchanges();
-        this.fetchBalances();
+        // this.fetchBalances();
+
+        this.exchangeMarkets['btcchina'].createOrder(marketName,
+            'buy',
+            '0.001',
+            '1'
+            );
     },
 
     bindEvents: function () {
@@ -96,6 +102,22 @@ module.exports = {
 
         this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
         this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
+
+        db.registerNewTrade({
+            market: config.market,
+            exchange1: {
+                name: ex1.name,
+                buyPrice: ex1.buy,
+                amount: ex1.amount
+            },
+            exchange2: {
+                name: ex2.name,
+                sellPrice: ex2.sell,
+                amount: ex2.amount
+            },
+            finalProfit: arb.finalProfit,
+            when: Date.now()
+        });
 
         emitter.emit('tradeOrderCompleted', arb, this.getTotalBalanceInExchanges());
     },
@@ -206,6 +228,7 @@ module.exports = {
         var totalBalances = {};
 
         _.each(this.exchangeMarkets, function (exchange) {
+
             var exchangeBalance = exchange.balances;
 
             _.each(exchangeBalance, function (currency, index) {
@@ -219,6 +242,8 @@ module.exports = {
                     }
                 }
             }, this);
+
+            db.newExchangeBalance(exchange.exchangeName, exchangeBalance);
         }, this);
 
         return totalBalances;

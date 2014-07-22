@@ -1,8 +1,9 @@
 var mongoose             = require('mongoose'),
-    connection           = mongoose.connect('mongodb://localhost/bitcoinbombs'),
+    connection           = mongoose.connect('mongodb://bitbot:12345@162.243.22.198:27017/bitbot'),
     db                   = mongoose.connection,
     TradeModel           = require('./models/TradeModel'),
-    ExchangeBalanceModel = require('./models/ExchangeModel');
+    ExchangeBalanceModel = require('./models/ExchangeBalanceModel'),
+    _                    = require('underscore');
 
 module.exports = {
     initialize: function () {
@@ -18,6 +19,7 @@ module.exports = {
             trade;
 
         trade = new tradeModel({
+            market: tradeData.market,
             exchange1: {
                 name: tradeData.ex1.name,
                 buyPrice: tradeData.ex1.buyPrice,
@@ -33,5 +35,30 @@ module.exports = {
         });
 
         trade.save();
+    },
+
+    newExchangeBalance: function (exchangeName, exchangeBalance) {
+        var exchangeBalanceModel = ExchangeBalanceModel.getModel(),
+            balance,
+            balanceArray = [];
+
+        _.each(exchangeBalance, function (balance, idx) {
+            if (balance > 0) {
+                var obj = {
+                    currency: idx,
+                    amount: balance
+                };
+
+                balanceArray.push(obj);
+            }
+        }, this);
+
+        balance = new exchangeBalanceModel({
+            name: exchangeName,
+            balances: balanceArray,
+            when: Date.now()
+        });
+
+        balance.save();
     }
 }

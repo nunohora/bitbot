@@ -14,7 +14,7 @@ module.exports = {
     createExchangeBalanceSchema: function () {
         var ExchangeBalanceSchema = new mongoose.Schema({
             name: String,
-            balances: Array
+            balances: Array,
             when: Date
         });
 

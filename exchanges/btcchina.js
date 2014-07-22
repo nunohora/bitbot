@@ -65,7 +65,10 @@ module.exports = {
         this.hasOpenOrder = true;
 
         btcchina.createOrder(mkt, type, rate, amount, function (err, data) {
+            console.log(err);
+            console.log(data);
             if (!err && data.success === 1) {
+                console.log('here');
             }
             else {
             }
