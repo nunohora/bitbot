@@ -40,17 +40,20 @@ module.exports = {
     newExchangeBalance: function (exchangeName, exchangeBalance) {
         var exchangeBalanceModel = ExchangeBalanceModel.getModel(),
             balance,
+            currencies = ['btc', 'ltc', 'usd'],
             balanceArray = [];
 
-        _.each(exchangeBalance, function (balance, idx) {
-            if (balance > 0) {
-                var obj = {
-                    currency: idx,
-                    amount: balance
-                };
+        _.each(currencies, function (currency) {
+            var amount = exchangeBalance[currency],
+                obj = {};
 
-                balanceArray.push(obj);
+            if (!amount) {
+                amount = 0;
             }
+
+            obj = { currency: currency, amount: amount };
+
+            balanceArray.push(obj);
         }, this);
 
         balance = new exchangeBalanceModel({

@@ -29,13 +29,7 @@ module.exports = {
         db.initialize();
         this.bindEvents();
         this.initializeExchanges();
-        // this.fetchBalances();
-
-        this.exchangeMarkets['btcchina'].createOrder(marketName,
-            'buy',
-            '0.001',
-            '1'
-            );
+        this.fetchBalances();
     },
 
     bindEvents: function () {
