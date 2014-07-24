@@ -3,11 +3,13 @@ var mongoose             = require('mongoose'),
     db                   = mongoose.connection,
     TradeModel           = require('./models/TradeModel'),
     ExchangeBalanceModel = require('./models/ExchangeBalanceModel'),
+    TotalBalanceModel    = require('./models/TotalBalanceModel'),
     _                    = require('underscore');
 
 module.exports = {
     initialize: function () {
         ExchangeBalanceModel.initialize();
+        TotalBalanceModel.initialize();
         TradeModel.initialize();
 
         db.on('error', console.error.bind(console, 'connection error:'));
@@ -40,7 +42,7 @@ module.exports = {
     newExchangeBalance: function (exchangeName, exchangeBalance) {
         var exchangeBalanceModel = ExchangeBalanceModel.getModel(),
             balance,
-            currencies = ['btc', 'ltc', 'usd'],
+            currencies = ['btc', 'ltc'],
             balanceArray = [];
 
         _.each(currencies, function (currency) {
@@ -63,5 +65,17 @@ module.exports = {
         });
 
         balance.save();
+    },
+
+    newTotalBalance: function (balances) {
+        var totalBalanceModel = TotalBalanceModel.getModel(),
+            totalBalance;
+
+        totalBalance = new totalBalanceModel({
+            balances: balances,
+            when: Date.now()
+        });
+
+        totalBalance.save();
     }
 }

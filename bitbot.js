@@ -240,6 +240,8 @@ module.exports = {
             db.newExchangeBalance(exchange.exchangeName, exchangeBalance);
         }, this);
 
+        db.newTotalBalance(totalBalances);
+
         return totalBalances;
     },
 
