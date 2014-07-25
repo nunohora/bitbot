@@ -73,7 +73,7 @@ module.exports = {
         _.each(currencies, function (currency) {
             data.push({
                 currency: currency,
-                amount: balances[currency]
+                amount: (balances[currency]).toFixed(8)
             });
         }, this);
 

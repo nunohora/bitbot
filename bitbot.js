@@ -11,6 +11,12 @@ var colors      = require('colors'),
 
 module.exports = {
 
+    markets: {
+        'LTC_USD': 0.1,
+        'BTC_USD': 0.01,
+        'LTC_BTC': 0.1
+    },
+
     priceLookupCounter: 0,
 
     totalBalance: {},
@@ -24,9 +30,11 @@ module.exports = {
         'vircurex': require('./exchanges/vircurex')
     },
 
-    initialize: function (marketName, tradeAmount) {
-        config.market = marketName;
-        config.tradeAmount = +tradeAmount;
+    initialize: function () {
+        var marketToUse = _.first(_.keys(this.markets));
+
+        config.market = marketToUse;
+        config.tradeAmount = this.markets[marketToUse];
 
         db.initialize();
         this.bindEvents();
