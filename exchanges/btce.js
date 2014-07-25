@@ -13,18 +13,22 @@ module.exports = {
 
     exchangeName: 'btce',
 
+    market: '',
+
     balances: {},
 
     prices: {},
 
     hasOpenOrder: false,
 
-    initialize: function () {
+    initialize: function (market) {
         _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
         emitter.on('orderNotCreated', this.createOrder);
+
+        this.market = config[this.exchangeName].marketMap[market];
     },
 
     fetchBalance: function () {
@@ -36,6 +40,7 @@ module.exports = {
         btceTrade.getInfo(function (err, data) {
             if (!err) {
                 self.balances = data.return.funds;
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -58,7 +63,7 @@ module.exports = {
         this.hasOpenOrder = true;
 
         btceTrade.trade({
-            pair: config[this.exchangeName].marketMap[market],
+            pair: this.market.name,
             type: type,
             rate: rate,
             amount: amount
@@ -86,7 +91,7 @@ module.exports = {
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
-            market = config[this.exchangeName].marketMap[config.market],
+            market = this.market.name,
             self = this;
 
         this.prices = {
@@ -124,7 +129,7 @@ module.exports = {
     checkOrderStatus: _.debounce(function () {
         var deferred = new Deferred(),
             self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+            market = this.market.name;
 
         btceTrade.activeOrders({pair: market}, function (err, data) {
             if (!err && data.error === 'no orders') {

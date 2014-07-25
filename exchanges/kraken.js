@@ -19,17 +19,20 @@ module.exports = {
 
     balancesMap: {
         'XXBT': 'btc',
-        'XLTC': 'ltc'
+        'XLTC': 'ltc',
+        'ZUSD': 'usd'
     },
 
     hasOpenOrder: false,
 
-    initialize: function () {
+    initialize: function (market) {
         _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
         emitter.on('orderNotCreated', this.createOrder);
+
+        this.market = config[this.exchangeName].marketMap[market];
     },
 
     fetchBalance: function () {
@@ -77,7 +80,7 @@ module.exports = {
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         kraken.api('AddOrder', {
-            pair: config[this.exchangeName].marketMap[market],
+            pair: this.market.name,
             type: newType,
             ordertype: 'limit',
             price: newRate,
@@ -109,7 +112,7 @@ module.exports = {
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
-            market = config[this.exchangeName].marketMap[config.market],
+            market = this.market.name,
             self = this;
 
         this.prices = {
@@ -131,6 +134,13 @@ module.exports = {
 
                     self.prices.buy.price = (1/_.first(tempData.bids)[0]);
                     self.prices.buy.quantity = (_.first(tempData.bids)[1] * _.first(tempData.bids)[0]).toFixed(8);
+                }
+                else {
+                    self.prices.buy.price = _.first(tempData.asks)[0];
+                    self.prices.buy.quantity = _.first(tempData.asks)[1];
+
+                    self.prices.sell.price = _.first(tempData.bids)[0];
+                    self.prices.sell.quantity = _.first(tempData.bids)[1];
                 }
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');

@@ -11,6 +11,8 @@ var colors      = require('colors'),
 
 module.exports = {
 
+    priceLookupCounter: 0,
+
     totalBalance: {},
 
     exchangeMarkets: {
@@ -18,7 +20,7 @@ module.exports = {
         'btce'      : require('./exchanges/btce'),
         'bitfinex'  : require('./exchanges/bitfinex'),
         'kraken'    : require('./exchanges/kraken'),
-        'btcchina'  : require('./exchanges/btcchina'),
+        // 'btcchina'  : require('./exchanges/btcchina'),
         'vircurex': require('./exchanges/vircurex')
     },
 
@@ -29,23 +31,22 @@ module.exports = {
         db.initialize();
         this.bindEvents();
         this.initializeExchanges();
+
         this.fetchBalances();
     },
 
     bindEvents: function () {
         _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges');
-        _.bindAll(utils, 'registerTrade');
 
         emitter.on('balancesFetched', this.lookForPrices);
         emitter.on('noArbFound', this.lookForPrices);
         emitter.on('tradeOrderCompleted', this.lookForPrices);
-        emitter.on('tradeOrderCompleted', utils.registerTrade);
         emitter.on('arbFound', this.makeTrade);
     },
 
     initializeExchanges: function () {
         _.each(this.exchangeMarkets, function (exchange) {
-            exchange.initialize();
+            exchange.initialize(config.market);
         }, this);
     },
 
@@ -99,12 +100,12 @@ module.exports = {
 
         db.registerNewTrade({
             market: config.market,
-            exchange1: {
+            ex1: {
                 name: ex1.name,
                 buyPrice: ex1.buy,
                 amount: ex1.amount
             },
-            exchange2: {
+            ex2: {
                 name: ex2.name,
                 sellPrice: ex2.sell,
                 amount: ex2.amount
@@ -188,7 +189,7 @@ module.exports = {
         profit = ex2.calculateProfit(smallestAmountAvailable, smallestDecimal);
 
 
-        finalProfit = (profit.profit - cost.cost).toFixed(8);
+        finalProfit = +(profit.profit - cost.cost).toFixed(8);
 
         console.log('###########'.green);
         console.log(ex1.exchangeName + ' profit: '.green, profit.profit);
@@ -258,10 +259,10 @@ module.exports = {
     },
 
     isMinimumAmountViable: function (ex1, ex2, amount) {
-        var minEx1 = config[ex1.exchangeName].minAmount.toFixed(8),
-            minEx2 = config[ex2.exchangeName].minAmount.toFixed(8);
+        var minEx1 = +(config[ex1.exchangeName].marketMap[config.market].minAmount).toFixed(8),
+            minEx2 = +(config[ex2.exchangeName].marketMap[config.market].minAmount).toFixed(8);
 
-        if (amount > minEx1 && amount > minEx2) {
+        if (amount >= minEx1 && amount >= minEx2) {
             return true;
         }
         else {

@@ -1,7 +1,5 @@
 var config          = require('./config'),
-    _               = require('underscore'),
-    fs              = require('fs'),
-    emailManager    = require('./emailManager');
+    _               = require('underscore');
 
 module.exports = {
 
@@ -81,26 +79,6 @@ module.exports = {
     orderByProfit: function (arrayOfArbs) {
         return _.sortBy(arrayOfArbs, function (arb) {
             return -(+arb.finalProfit);
-        });
-    },
-
-    registerTrade: function (arb, totalBalances) {
-        this.writeToFile(arb, totalBalances);
-
-        emailManager.prepareEmail();
-    },
-
-    writeToFile: function (arb, totalBalances) {
-        var obj = JSON.stringify({
-            arb: arb,
-            totalBalances: totalBalances,
-            timestamp: Date.now()
-        });
-
-        fs.appendFile('./tradeLog.log','%' + obj, function (err) {
-            if (err) {
-                console.log('error writing to file: ', err);
-            }
         });
     }
 };

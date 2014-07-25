@@ -20,6 +20,8 @@ module.exports = {
         var tradeModel = TradeModel.getModel(),
             trade;
 
+        console.log('tradeData: ', tradeData);
+
         trade = new tradeModel({
             market: tradeData.market,
             exchange1: {
@@ -42,20 +44,15 @@ module.exports = {
     newExchangeBalance: function (exchangeName, exchangeBalance) {
         var exchangeBalanceModel = ExchangeBalanceModel.getModel(),
             balance,
-            currencies = ['btc', 'ltc'],
+            currencies = ['btc', 'ltc', 'usd'],
             balanceArray = [];
 
         _.each(currencies, function (currency) {
-            var amount = exchangeBalance[currency],
-                obj = {};
+            var amount = exchangeBalance[currency];
 
-            if (!amount) {
-                amount = 0;
-            }
+            if (!amount) { amount = 0; }
 
-            obj = { currency: currency, amount: amount };
-
-            balanceArray.push(obj);
+            balanceArray.push({ currency: currency, amount: amount });
         }, this);
 
         balance = new exchangeBalanceModel({
@@ -69,10 +66,19 @@ module.exports = {
 
     newTotalBalance: function (balances) {
         var totalBalanceModel = TotalBalanceModel.getModel(),
-            totalBalance;
+            currencies = ['btc', 'ltc', 'usd'],
+            totalBalance,
+            data = [];
+
+        _.each(currencies, function (currency) {
+            data.push({
+                currency: currency,
+                amount: balances[currency]
+            });
+        }, this);
 
         totalBalance = new totalBalanceModel({
-            balances: balances,
+            balances: data,
             when: Date.now()
         });
 

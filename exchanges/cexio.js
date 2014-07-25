@@ -13,18 +13,22 @@ module.exports = {
 
     exchangeName: 'cexio',
 
+    market: '',
+
     balances: {},
 
     prices: {},
 
     hasOpenOrder: false,
 
-    initialize: function () {
+    initialize: function (market) {
         _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
         emitter.on('orderNotCreated', this.createOrder);
+
+        this.market = config[this.exchangeName].marketMap[market];
     },
 
     fetchBalance: function () {
@@ -38,7 +42,7 @@ module.exports = {
                 _.each(data, function (balance, index) {
                     var currency;
 
-                    if (index === 'BTC' || index === 'LTC') {
+                    if (index === index.toUpperCase()) {
                         self.balances[index.toLowerCase()] = +balance['available'];
                     }
                 }, self);
@@ -64,7 +68,7 @@ module.exports = {
 
         this.hasOpenOrder = true;
 
-        Cexio.place_order(type, amount, rate, config[this.exchangeName].marketMap[market] , function (err, data) {
+        Cexio.place_order(type, amount, rate, this.market.name , function (err, data) {
             console.log('CEX.IO place order data: ', data);
             if (!err && data && !data.error) {
                 emitter.emit('orderCreated');
@@ -91,7 +95,7 @@ module.exports = {
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
-            market = config[this.exchangeName].marketMap[config.market],
+            market = this.market.name,
             self = this;
 
         this.prices = {
@@ -127,7 +131,7 @@ module.exports = {
     checkOrderStatus: _.debounce(function () {
         var deferred = new Deferred(),
             self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+            market = this.market.name;
 
         Cexio.open_orders(market, function (err, data) {
             if (!err && _.isArray(data) && _.isEmpty(data)) {

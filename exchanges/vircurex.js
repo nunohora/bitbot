@@ -30,12 +30,14 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    initialize: function () {
+    initialize: function (market) {
         _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
         emitter.on('orderNotCreated', this.createOrder);
+
+        this.market = config[this.exchangeName].marketMap[market];
     },
 
     fetchBalance: function () {
@@ -80,7 +82,7 @@ module.exports = {
 
     createOrder: function (market, type, rate, amount) {
         var deferred = new Deferred(),
-            realMarket =  config[this.exchangeName].marketMap[market],
+            realMarket = this.market.name,
             self = this,
             currency1,
             currency2;
@@ -126,8 +128,8 @@ module.exports = {
 
     getExchangeInfo: function () {
         var self = this,
-            deferred    = new Deferred(),
-            market      = config[this.exchangeName].marketMap[config.market],
+            deferred = new Deferred(),
+            market = this.market.name,
             base,
             alt;
 

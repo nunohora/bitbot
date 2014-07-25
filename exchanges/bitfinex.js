@@ -13,18 +13,22 @@ module.exports = {
 
     exchangeName: 'bitfinex',
 
+    market: '',
+
     balances: {},
 
     prices: {},
 
     hasOpenOrder: false,
 
-    initialize: function () {
+    initialize: function (market) {
         _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
         emitter.on('orderNotMatched', this.checkOrderStatus);
         emitter.on('orderMatched', this.fetchBalance);
         emitter.on('orderCreated', this.checkOrderStatus);
         emitter.on('orderNotCreated', this.createOrder);
+
+        this.market = config[this.exchangeName].marketMap[market];
     },
 
     fetchBalance: function () {
@@ -60,7 +64,7 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var mkt = config[this.exchangeName].marketMap[market];
+        var mkt = this.market.name;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
@@ -93,7 +97,7 @@ module.exports = {
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
-            market = config[this.exchangeName].marketMap[config.market],
+            market = this.market.name,
             self = this;
 
         this.prices = {
@@ -124,7 +128,7 @@ module.exports = {
 
     checkOrderStatus: _.debounce(function () {
         var self = this,
-            market = config[this.exchangeName].marketMap[config.market];
+            market = this.market.name;
 
         bitfinex.active_orders(function (err, data) {
             if (!err && _.isEmpty(data)) {

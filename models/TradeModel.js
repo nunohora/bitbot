@@ -27,6 +27,6 @@ module.exports = {
             when: Date
         });
 
-        this.TradeModel = mongoose.model('TradeModel', TradeSchema);
+        this.TradeModel = mongoose.model('Trades', TradeSchema);
     }
 };
