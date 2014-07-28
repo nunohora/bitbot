@@ -3,9 +3,7 @@ var colors      = require('colors'),
     Deferred    = require("promised-io/promise").Deferred,
     config      = require('./../config'),
     Bitfinex    = require('bitfinex'),
-    utils       = require('../utils'),
-    events      = require('events'),
-    emitter     = new events.EventEmitter();
+    utils       = require('../utils');
 
 var bitfinex = new Bitfinex(config['bitfinex'].apiKey, config['bitfinex'].secret);
 
@@ -15,19 +13,28 @@ module.exports = {
 
     market: '',
 
+    emitter: {},
+
     balances: {},
 
     prices: {},
 
     hasOpenOrder: false,
 
-    initialize: function (market) {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
-        emitter.on('orderNotMatched', this.checkOrderStatus);
-        emitter.on('orderMatched', this.fetchBalance);
-        emitter.on('orderCreated', this.checkOrderStatus);
-        emitter.on('orderNotCreated', this.createOrder);
+    initialize: function (emitter) {
+        this.emitter = emitter;
+        this.bindEvents();
+    },
 
+    bindEvents: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
+        this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderMatched', this.fetchBalance);
+        this.emitter.on(this.exchangeName + ':orderCreated', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderNotCreated', this.createOrder);
+    },
+
+    setMarket: function (market) {
         this.market = config[this.exchangeName].marketMap[market];
     },
 
@@ -64,7 +71,8 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var mkt = this.market.name;
+        var mkt = this.market.name,
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
@@ -74,12 +82,12 @@ module.exports = {
             console.log('bitfinex orderId:', data);
 
             if (!err && data['order_id']) {
-                emitter.emit('orderCreated');
+                self.emitter.emit(self.exchangeName + ':orderCreated');
             }
             else {
                 console.log('BITFINEX ORDER UNSUCCESSFULL '.red, err);
                 _.delay(function () {
-                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                    self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
                 }, config.interval);
             }
         });
@@ -135,12 +143,12 @@ module.exports = {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                 _.delay(function () {
                     self.hasOpenOrder = false;
-                    emitter.emit('orderMatched');
+                    self.emitter.emit(self.exchangeName + ':orderMatched');
                 }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                emitter.emit('orderNotMatched');
+                self.emitter.emit(self.exchangeName + ':orderNotMatched');
             }
         });
     }, config.interval),

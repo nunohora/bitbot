@@ -3,9 +3,7 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
-    KrakenClient    = require('kraken-api'),
-    events      = require('events'),
-    emitter     = new events.EventEmitter();
+    KrakenClient    = require('kraken-api');
 
 var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret);
 
@@ -17,6 +15,8 @@ module.exports = {
 
     prices: {},
 
+    emitter: {},
+
     balancesMap: {
         'XXBT': 'btc',
         'XLTC': 'ltc',
@@ -25,13 +25,20 @@ module.exports = {
 
     hasOpenOrder: false,
 
-    initialize: function (market) {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
-        emitter.on('orderNotMatched', this.checkOrderStatus);
-        emitter.on('orderMatched', this.fetchBalance);
-        emitter.on('orderCreated', this.checkOrderStatus);
-        emitter.on('orderNotCreated', this.createOrder);
+    initialize: function (emitter) {
+        this.emitter = emitter;
+        this.bindEvents();
+    },
 
+    bindEvents: function () {
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
+        this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderMatched', this.fetchBalance);
+        this.emitter.on(this.exchangeName + ':orderCreated', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderNotCreated', this.createOrder);
+    },
+
+    setMarket: function (market) {
         this.market = config[this.exchangeName].marketMap[market];
     },
 
@@ -65,9 +72,9 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var newRate,
-            newType,
-            newAmount;
+        var newRate = rate,
+            newType = type,
+            self = this;
 
         //ugly ugly
         if (config.market === 'LTC_BTC') {
@@ -89,12 +96,13 @@ module.exports = {
         }, function (err, data) {
             if (!err && _.isEmpty(data.error)) {
                 console.log('KRAKEN resolved successfully!');
-                emitter.emit('orderCreated');
+                self.emitter.emit(self.exchangeName + ':orderCreated');
             }
             else {
                 console.log('KRAKEN error on order: ', err);
+                if (data.error) { console.log('KRAKEN error on order: ', data.error)}
                 _.delay(function () {
-                    emitter.emit('orderNotCreated', market, type, rate, amount);
+                    self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
                 }, config.interval);
             }
         });
@@ -168,12 +176,12 @@ module.exports = {
                 console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
                 _.delay(function () {
                     self.hasOpenOrder = false;
-                    emitter.emit('orderMatched');
+                    self.emitter.emit(self.exchangeName + ':orderMatched');
                 }, config.interval);
             }
             else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                emitter.emit('orderNotMatched');
+                self.emitter.emit(self.exchangeName + ':orderNotMatched');
             }
         });
     }, config.interval)

@@ -11,55 +11,93 @@ var colors      = require('colors'),
 
 module.exports = {
 
-    markets: {
-        'LTC_USD': 0.1,
-        'BTC_USD': 0.01,
-        'LTC_BTC': 0.1
-    },
+    markets: [
+        { 'LTC_USD': 0.1 },
+        { 'BTC_USD': 0.01 },
+        { 'LTC_BTC': 0.1 }
+    ],
+
+    marketIndex: 0,
 
     priceLookupCounter: 0,
 
     totalBalance: {},
 
+    openTrades: {},
+
     exchangeMarkets: {
-        'cexio'     : require('./exchanges/cexio'),
-        'btce'      : require('./exchanges/btce'),
-        'bitfinex'  : require('./exchanges/bitfinex'),
-        'kraken'    : require('./exchanges/kraken'),
-        // 'btcchina'  : require('./exchanges/btcchina'),
-        'vircurex': require('./exchanges/vircurex')
+        'cexio'    : require('./exchanges/cexio'),
+        'btce'     : require('./exchanges/btce'),
+        'bitfinex' : require('./exchanges/bitfinex'),
+        'kraken'   : require('./exchanges/kraken'),
+        // 'btcchina' : require('./exchanges/btcchina'),
+        'vircurex' : require('./exchanges/vircurex')
     },
 
+    validExchanges: {},
+
     initialize: function () {
-        var marketToUse = _.first(_.keys(this.markets));
+        db.initialize();
+        this.bindEvents();
+        this.initializeExchanges();
+        this.setupMarket();
+    },
+
+    setupMarket: function () {
+        var marketToUse = this.getMarket();
 
         config.market = marketToUse;
         config.tradeAmount = this.markets[marketToUse];
 
-        db.initialize();
-        this.bindEvents();
-        this.initializeExchanges();
-
+        this.populateValidExchanges(marketToUse);
+        this.setExchangesMarket(marketToUse);
         this.fetchBalances();
+    },
+
+    getMarket: function () {
+        if (this.marketIndex >= this.markets.length) {
+            this.marketIndex = 0;
+        }
+
+        return _.first(_.keys(this.markets[this.marketIndex]));
     },
 
     bindEvents: function () {
         _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges');
-
         emitter.on('balancesFetched', this.lookForPrices);
-        emitter.on('noArbFound', this.lookForPrices);
         emitter.on('tradeOrderCompleted', this.lookForPrices);
+        emitter.on('noArbFound', this.lookForPrices);
         emitter.on('arbFound', this.makeTrade);
+    },
+
+    populateValidExchanges: function (market) {
+        var exchanges = _.keys(this.exchangeMarkets),
+            valid = [];
+
+        valid = _.filter(exchanges, function (exchange) {
+            return config[exchange].marketMap[market];
+        }, this);
+
+        _.each(valid, function (ex) {
+            this.validExchanges[ex] = this.exchangeMarkets[ex];
+        }, this);
     },
 
     initializeExchanges: function () {
         _.each(this.exchangeMarkets, function (exchange) {
-            exchange.initialize(config.market);
+            exchange.initialize(emitter);
+        }, this);
+    },
+
+    setExchangesMarket: function (market) {
+        _.each(this.validExchanges, function (exchange) {
+            exchange.setMarket(market);
         }, this);
     },
 
     fetchBalances: function () {
-        var self = this;
+        var self = this,
+            promises;
 
         promises = _.map(this.getMarketsWithoutOpenOrders(), function (exchange) {
             return exchange.fetchBalance();
@@ -74,13 +112,16 @@ module.exports = {
     },
 
     lookForPrices: _.debounce(function () {
-        var self = this;
+        var self = this,
+            promises,
+            result,
+            arb;
 
-        var promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
+        promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
             return exchange.getExchangeInfo();
         }, this);
 
-        var group = all(promises).then(function () {
+        all(promises).then(function () {
             console.log('*** Finished Checking Exchange Prices *** '.blue);
 
             result = self.calculateArbOpportunity(self.getMarketsWithoutOpenOrders());
@@ -96,6 +137,8 @@ module.exports = {
             ex1 = arb.ex1,
             ex2 = arb.ex2;
 
+        this.priceLookupCounter = 0;
+
         console.log("\007");
         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
         console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
@@ -103,8 +146,8 @@ module.exports = {
         console.log('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
         console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
 
-        this.exchangeMarkets[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
-        this.exchangeMarkets[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
+        this.validExchanges[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
+        this.validExchanges[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
 
         db.registerNewTrade({
             market: config.market,
@@ -137,8 +180,8 @@ module.exports = {
     checkExchangeForEnoughBalance: function (arb) {
         var ex1 = arb.ex1,
             ex2 = arb.ex2,
-            balanceToBuy = this.exchangeMarkets[ex1.name].balances[config.market.split("_")[1].toLowerCase()] || 0,
-            balanceToSell = this.exchangeMarkets[ex2.name].balances[config.market.split("_")[0].toLowerCase()] || 0;
+            balanceToBuy = this.validExchanges[ex1.name].balances[config.market.split("_")[1].toLowerCase()] || 0,
+            balanceToSell = this.validExchanges[ex2.name].balances[config.market.split("_")[0].toLowerCase()] || 0;
 
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!'.green);
@@ -231,10 +274,7 @@ module.exports = {
         var totalBalances = {};
 
         _.each(this.exchangeMarkets, function (exchange) {
-
-            var exchangeBalance = exchange.balances;
-
-            _.each(exchangeBalance, function (currency, index) {
+            _.each(exchange.balances, function (currency, index) {
                 if (currency > 0) {
                     if (totalBalances[index]) {
                         totalBalances[index] += currency;
@@ -246,7 +286,7 @@ module.exports = {
                 }
             }, this);
 
-            db.newExchangeBalance(exchange.exchangeName, exchangeBalance);
+            db.newExchangeBalance(exchange.exchangeName, exchange.balances);
         }, this);
 
         db.newTotalBalance(totalBalances);
@@ -255,7 +295,7 @@ module.exports = {
     },
 
     getMarketsWithoutOpenOrders: function () {
-        return _.filter(this.exchangeMarkets, function (exchange) {
+        return _.filter(this.validExchanges, function (exchange) {
             return !exchange.hasOpenOrder;
         }, this);
     },
