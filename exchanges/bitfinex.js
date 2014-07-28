@@ -54,6 +54,8 @@ module.exports = {
                     }
                 }, self);
 
+                self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
@@ -105,17 +107,13 @@ module.exports = {
 
     getExchangeInfo: function () {
         var deferred = new Deferred(),
-            market = this.market.name,
             self = this;
 
-        this.prices = {
-            buy: {},
-            sell : {}
-        };
+        this.prices = { buy: {}, sell : {} };
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        bitfinex.orderbook(market, function (err, data) {
+        bitfinex.orderbook(this.market.name, function (err, data) {
             if (!err) {
                 self.populatePrices(data);
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');

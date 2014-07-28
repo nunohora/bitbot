@@ -62,6 +62,8 @@ module.exports = {
                 self.hasOpenOrder = false;
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
+
+                self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
             }
             else {
                 console.log('Error when checking balance for '.red + self.exchangeName);
@@ -184,6 +186,7 @@ module.exports = {
                 _.delay(function () {
                     self.hasOpenOrder = false;
                     self.emitter.emit(self.exchangeName + ':orderMatched');
+                    self.emitter.emit('exchangeOrderMatched', self.exchangeName);
                 }, config.interval);
             }
             else {

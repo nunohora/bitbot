@@ -57,6 +57,8 @@ module.exports = {
                 }, self);
 
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
+
+                self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
             }
             else {
                 console.log('Error when checking balance for '.red + self.exchangeName);

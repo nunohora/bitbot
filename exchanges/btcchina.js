@@ -52,6 +52,8 @@ module.exports = {
                     self.balances[idx] = +amount;
                 });
 
+                self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
+
                 console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
             }
             else {
