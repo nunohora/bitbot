@@ -24,7 +24,8 @@ module.exports = {
                 amount: Number
             },
             profit: Number,
-            when: Date
+            when: Date,
+            market: String
         });
 
         this.TradeModel = mongoose.model('Trades', TradeSchema);

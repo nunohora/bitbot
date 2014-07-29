@@ -78,12 +78,15 @@ module.exports = {
         this.hasOpenOrder = true;
 
         btcchina.createOrder(mkt, type, rate, amount, function (err, data) {
-            console.log(err);
-            console.log(data);
-            if (!err && data.success === 1) {
-                console.log('here');
+            console.log('btcchina order data: ', data);
+            if (!err) {
+                self.emitter.emit(self.exchangeName + ':orderCreated');
             }
             else {
+                console.log('BTC CHINA ORDER UNSUCCESSFULL '.red, err);
+                _.delay(function () {
+                    self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
     },

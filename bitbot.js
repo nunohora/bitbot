@@ -30,7 +30,7 @@ module.exports = {
         'btce'     : require('./exchanges/btce'),
         'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
-        // 'btcchina' : require('./exchanges/btcchina'),
+        'btcchina' : require('./exchanges/btcchina'),
         'vircurex' : require('./exchanges/vircurex')
     },
 
@@ -65,7 +65,7 @@ module.exports = {
     },
 
     bindEvents: function () {
-        _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges', 'onNoArbFound', 'exchangeBalanceFetched');
+        _.bindAll(this, 'lookForPrices', 'makeTrade', 'getTotalBalanceInExchanges', 'onNoArbFound', 'onExchangeBalanceFetched');
         emitter.on('balancesFetched', this.lookForPrices);
         emitter.on('tradeOrderCompleted', this.lookForPrices);
         emitter.on('noArbFound', this.onNoArbFound);
@@ -76,6 +76,8 @@ module.exports = {
     populateValidExchanges: function (market) {
         var exchanges = _.keys(this.exchangeMarkets),
             valid = [];
+
+        this.validExchanges = {};
 
         valid = _.filter(exchanges, function (exchange) {
             return config[exchange].marketMap[market];
@@ -290,7 +292,10 @@ module.exports = {
 
     onExchangeBalanceFetched: function (exName) {
         var ex = this.exchangeMarkets[exName];
+
         db.newExchangeBalance(ex.exchangeName, ex.balances);
+
+        console.log('openTrades: ', this.openTrades);
 
         _.each(this.openTrades, function (openTrade, idx) {
             if (openTrade[exName]) {
@@ -298,8 +303,11 @@ module.exports = {
             }
 
             var isTradeClosed = _.every(openTrade, function (key) {
+                console.log('key: ', key);
                 return !!key;
             }, this);
+
+            console.log('is trade closed: ', isTradeClosed);
 
             if (isTradeClosed) {
                 this.getTotalBalanceInExchanges();

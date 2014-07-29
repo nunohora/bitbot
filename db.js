@@ -26,15 +26,15 @@ module.exports = {
             market: tradeData.market,
             exchange1: {
                 name: tradeData.ex1.name,
-                buyPrice: tradeData.ex1.buyPrice,
-                amount: tradeData.ex1.amount
+                buyPrice: +(tradeData.ex1.buyPrice).toFixed(8),
+                amount: +(tradeData.ex1.amount).toFixed(8)
             },
             exchange2: {
                 name: tradeData.ex2.name,
-                sellPrice: tradeData.ex2.sellPrice,
-                amount: tradeData.ex2.amount
+                sellPrice: +(tradeData.ex2.sellPrice).toFixed(8),
+                amount: +(tradeData.ex2.amount).toFixed(8)
             },
-            profit: tradeData.finalProfit,
+            profit: +(tradeData.finalProfit).toFixed(8),
             when: Date.now()
         });
 
