@@ -1,0 +1,46 @@
+node_modules/
+npm-debug.log
+tests/
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+.swp
+/plugin.xml
+plugin.xml
+out/
+logs/
+projectFilesBackup/
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+logs/
+target/
+
+# project release file
+/*.war
+
+# plugin release file
+/*.zip
+
+# "temporary" build files
+/target
+
+
+/out
+# logs
+/stacktrace.log
+/test/reports
+/logs
+
+

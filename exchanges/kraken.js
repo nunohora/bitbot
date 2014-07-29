@@ -20,7 +20,9 @@ module.exports = {
     balancesMap: {
         'XXBT': 'btc',
         'XLTC': 'ltc',
-        'ZUSD': 'usd'
+        'ZUSD': 'usd',
+        'XNMC': 'nmc',
+        'ZEUR': 'eur'
     },
 
     hasOpenOrder: false,
@@ -79,7 +81,7 @@ module.exports = {
             self = this;
 
         //ugly ugly
-        if (config.market === 'LTC_BTC') {
+        if (config.market === 'LTC_BTC' || config.market === 'NMC_BTC') {
             newType = type === 'buy' ? 'sell' : 'buy';
             newRate = (1/rate).toFixed(5);
         }
@@ -138,7 +140,7 @@ module.exports = {
                     tempData = data.result[resultMarket];
 
                 //ugly, but will do for now
-                if (config.market === 'LTC_BTC') {
+                if (config.market === 'LTC_BTC' || config.market === 'NMC_BTC') {
                     self.prices.sell.price = (1/_.first(tempData.asks)[0]);
                     self.prices.sell.quantity = (_.first(tempData.asks)[1] * _.first(tempData.asks)[0]).toFixed(8);
 

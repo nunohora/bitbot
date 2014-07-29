@@ -15,6 +15,9 @@ module.exports = {
         { 'LTC_USD': 0.1 },
         { 'BTC_USD': 0.01 },
         { 'LTC_BTC': 0.1 }
+        // { 'NMC_BTC': 0.1 }
+        // { 'NMC_USD': 0.1 },
+        // { 'BTC_EUR': 0.01 }
     ],
 
     marketIndex: 0,
@@ -32,6 +35,7 @@ module.exports = {
         'kraken'   : require('./exchanges/kraken'),
         'btcchina' : require('./exchanges/btcchina'),
         'vircurex' : require('./exchanges/vircurex')
+        // 'anxpro'   : require('./exchanges/anxpro')
     },
 
     validExchanges: {},
@@ -138,8 +142,7 @@ module.exports = {
     }, config.interval),
 
     makeTrade: function (arb) {
-        var self = this,
-            ex1 = arb.ex1,
+        var ex1 = arb.ex1,
             ex2 = arb.ex2,
             openTrade = {};
 
@@ -159,6 +162,9 @@ module.exports = {
         openTrade[ex2.name] = false;
 
         this.openTrades.push[openTrade];
+
+        console.log('make trade - open trade');
+        console.log(this.openTrades);
 
         db.registerNewTrade({
             market: config.market,

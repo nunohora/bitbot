@@ -26,15 +26,15 @@ module.exports = {
             market: tradeData.market,
             exchange1: {
                 name: tradeData.ex1.name,
-                buyPrice: +(tradeData.ex1.buyPrice).toFixed(8),
-                amount: +(tradeData.ex1.amount).toFixed(8)
+                buyPrice: tradeData.ex1.buyPrice,
+                amount: tradeData.ex1.amount
             },
             exchange2: {
                 name: tradeData.ex2.name,
-                sellPrice: +(tradeData.ex2.sellPrice).toFixed(8),
-                amount: +(tradeData.ex2.amount).toFixed(8)
+                sellPrice: tradeData.ex2.sellPrice,
+                amount: tradeData.ex2.amount
             },
-            profit: +(tradeData.finalProfit).toFixed(8),
+            profit: tradeData.finalProfit,
             when: Date.now()
         });
 
@@ -60,6 +60,8 @@ module.exports = {
             balances: balanceArray,
             when: Date.now()
         });
+
+        console.log('balance: ', balance);
 
         balance.save();
     },
