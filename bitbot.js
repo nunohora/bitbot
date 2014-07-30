@@ -12,9 +12,9 @@ var colors      = require('colors'),
 module.exports = {
 
     markets: [
-        { 'LTC_USD': 0.1 },
-        { 'BTC_USD': 0.01 },
-        { 'LTC_BTC': 0.1 }
+        { 'LTC_USD': 0.5 },
+        { 'BTC_USD': 0.02 },
+        { 'LTC_BTC': 1 }
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
@@ -23,8 +23,6 @@ module.exports = {
     marketIndex: 0,
 
     priceLookupCounter: 0,
-
-    totalBalance: {},
 
     openTrades: [],
 
@@ -113,9 +111,6 @@ module.exports = {
         }, this);
 
         all(promises).then(function () {
-            self.totalBalance = self.getTotalBalanceInExchanges();
-            console.log('Total balance of exchanges: '.red, self.totalBalance);
-
             emitter.emit('balancesFetched');
         });
     },
@@ -161,10 +156,7 @@ module.exports = {
         openTrade[ex1.name] = false;
         openTrade[ex2.name] = false;
 
-        this.openTrades.push[openTrade];
-
-        console.log('make trade - open trade');
-        console.log(this.openTrades);
+        this.openTrades.push(openTrade);
 
         db.registerNewTrade({
             market: config.market,
@@ -308,18 +300,14 @@ module.exports = {
                 openTrade[exName] = true;
             }
 
-            var isTradeClosed = _.every(openTrade, function (key) {
-                console.log('key: ', key);
+            var isTradeClosed = _.every(openTrade, function (value, key) {
                 return !!key;
             }, this);
 
-            console.log('is trade closed: ', isTradeClosed);
-
             if (isTradeClosed) {
+                this.openTrades.splice(idx, 1);
                 this.getTotalBalanceInExchanges();
             }
-
-            this.openTrades.splice(idx, 1);
 
         }, this);
     },

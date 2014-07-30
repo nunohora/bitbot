@@ -20,8 +20,6 @@ module.exports = {
         var tradeModel = TradeModel.getModel(),
             trade;
 
-        console.log('tradeData: ', tradeData);
-
         trade = new tradeModel({
             market: tradeData.market,
             exchange1: {
@@ -60,8 +58,6 @@ module.exports = {
             balances: balanceArray,
             when: Date.now()
         });
-
-        console.log('balance: ', balance);
 
         balance.save();
     },

@@ -71,7 +71,8 @@ module.exports = {
     },
 
     createOrder: function (market, type, rate, amount) {
-        var mkt = this.market.name;
+        var mkt = this.market.name,
+            self = this;
 
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
@@ -79,7 +80,7 @@ module.exports = {
 
         btcchina.createOrder(mkt, type, rate, amount, function (err, data) {
             console.log('btcchina order data: ', data);
-            if (!err) {
+            if (!err && data.result) {
                 self.emitter.emit(self.exchangeName + ':orderCreated');
             }
             else {
